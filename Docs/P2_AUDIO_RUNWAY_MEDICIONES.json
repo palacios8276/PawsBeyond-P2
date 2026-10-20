@@ -1,0 +1,54 @@
+[
+  {
+    "name": "NightHouse_Loop",
+    "seconds": 10.037755102040816,
+    "frequency": 44100,
+    "channels": 2,
+    "rmsDbFS": -24.013188973757529,
+    "peakDbFS": -10.2457192338832,
+    "seamDelta": 0.00439152867,
+    "loadType": "CompressedInMemory",
+    "compression": "Vorbis",
+    "quality": 0.7,
+    "pcmBytes": 1770660
+  },
+  {
+    "name": "TV_Nonverbal_Loop",
+    "seconds": 10.037755102040816,
+    "frequency": 44100,
+    "channels": 1,
+    "rmsDbFS": -20.000000147603238,
+    "peakDbFS": -6.4606116485402687,
+    "seamDelta": 0.0439354554,
+    "loadType": "CompressedInMemory",
+    "compression": "Vorbis",
+    "quality": 0.7,
+    "pcmBytes": 885330
+  },
+  {
+    "name": "FridgeMotor_Loop",
+    "seconds": 10.037755102040816,
+    "frequency": 44100,
+    "channels": 1,
+    "rmsDbFS": -23.098039354987861,
+    "peakDbFS": -12.789228855718076,
+    "seamDelta": 0.000730872154,
+    "loadType": "DecompressOnLoad",
+    "compression": "PCM",
+    "quality": 0.7,
+    "pcmBytes": 885330
+  },
+  {
+    "name": "WindowBreeze_Loop",
+    "seconds": 10.037755102040816,
+    "frequency": 44100,
+    "channels": 1,
+    "rmsDbFS": -22.820053402827149,
+    "peakDbFS": -6.0206000734237755,
+    "seamDelta": 0.001954563,
+    "loadType": "CompressedInMemory",
+    "compression": "Vorbis",
+    "quality": 0.65,
+    "pcmBytes": 885330
+  }
+]

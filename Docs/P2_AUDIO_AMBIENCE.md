@@ -1,5 +1,7 @@
 # PawsBeyond-P2 — Ambientación doméstica, etapa 1
 
+> Registro histórico de preparación. Para el estado actual con clips asignados, ver [P2_AUDIO_RUNWAY.md](P2_AUDIO_RUNWAY.md).
+
 Registro: 19/10/2026 (America/Buenos_Aires). Estado: **estructura de audio preparada; sonido pendiente de recursos**.
 
 ## 1. Inspección inicial

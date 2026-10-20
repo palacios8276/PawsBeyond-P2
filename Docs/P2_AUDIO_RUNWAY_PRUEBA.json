@@ -1,0 +1,31 @@
+{
+  "result": "PASS técnico; escucha perceptual pendiente",
+  "frames": 1988,
+  "dspSeconds": 23.680000000000007,
+  "listeners": 1,
+  "sources": [
+    {
+      "name": "AUDIO-01_NightAmbience",
+      "playing": true,
+      "wraps": 2
+    },
+    {
+      "name": "AUDIO-02_TV",
+      "playing": true,
+      "wraps": 2
+    },
+    {
+      "name": "AUDIO-05_WindowBreeze",
+      "playing": true,
+      "wraps": 2
+    },
+    {
+      "name": "AUDIO-03_Fridge",
+      "playing": true,
+      "wraps": 2
+    }
+  ],
+  "sampledOutputPeak": 0.06122778,
+  "sampledOutputRms": 0.01314887284688262,
+  "scope": "Salida de inicio en Bedroom durante 22 segundos; no es medición del Audio Profiler ni validación de todo el recorrido."
+}

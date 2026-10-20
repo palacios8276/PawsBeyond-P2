@@ -1,0 +1,52 @@
+{
+  "nota": "Recursos provisorios generados con IA a pedido del usuario. No son grabaciones propias ni material final de la entrega. Se conservan los MP3 originales y los WAV derivados; convertir a WAV no recupera la información perdida en MP3.",
+  "fechaLocal": "2026-10-19",
+  "proveedor": "Runway",
+  "recursos": [
+    {
+      "name": "NightHouse_Loop",
+      "taskId": "64041874-7369-4bba-86b2-8d90e5a2eb91",
+      "prompt": "Quiet indoor room tone of a peaceful house at night. Very soft diffuse air, faint distant outdoor night ambience through closed windows, still and familiar, gentle curiosity. No distinct appliances, no footsteps, no creaks, no birdsong, no voices, no music, no alien sounds. Steady seamless loop.",
+      "requestedDurationSeconds": 10,
+      "loopRequested": true,
+      "original": "AudioSources/Runway/NightHouse_Loop.mp3",
+      "derived": "Assets/Audio/Clips/Ambience/NightHouse_Loop.wav",
+      "status": "provisional, generado con IA; pendiente de revisión auditiva y mejora en REAPER",
+      "provider": "Runway"
+    },
+    {
+      "name": "TV_Nonverbal_Loop",
+      "taskId": "1e91b986-84f9-4ce3-9d03-6b1093925555",
+      "prompt": "An old television quietly playing abstract nonverbal electronic static and soft filtered broadcast noise in a living room at night. Subtle fluctuating hiss, faint soft electronic texture. No speech, no vocal sounds, no music or melody, no channel switching, no sharp bursts. Dry close recording, smooth constant seamless loop.",
+      "requestedDurationSeconds": 10,
+      "loopRequested": true,
+      "original": "AudioSources/Runway/TV_Nonverbal_Loop.mp3",
+      "derived": "Assets/Audio/Clips/Ambience/TV_Nonverbal_Loop.wav",
+      "status": "provisional, generado con IA; pendiente de revisión auditiva y mejora en REAPER",
+      "provider": "Runway"
+    },
+    {
+      "name": "FridgeMotor_Loop",
+      "taskId": "f2da4eb6-7aa7-4b77-9c89-2e6b5f6b35e6",
+      "prompt": "Quiet refrigerator compressor running steadily in a sleeping house. Low warm motor hum, subtle mechanical vibration and faint electrical buzz. Dry close recording, constant level, no start or stop, no clanks, no voices, no music, no dramatic effects. Seamless continuous loop.",
+      "requestedDurationSeconds": 10,
+      "loopRequested": true,
+      "original": "AudioSources/Runway/FridgeMotor_Loop.mp3",
+      "derived": "Assets/Audio/Clips/Ambience/FridgeMotor_Loop.wav",
+      "status": "provisional, generado con IA; pendiente de revisión auditiva y mejora en REAPER",
+      "provider": "Runway"
+    },
+    {
+      "name": "WindowBreeze_Loop",
+      "taskId": "14eae044-f63f-4c05-a13c-0f96362a3868",
+      "prompt": "Gentle outdoor night breeze heard close to an open house window. Soft airy rustle with slow natural fluctuations, peaceful and light, intimate close perspective. No storm, no howling wind, no insects, no voices, no music, no spacecraft. No abrupt gusts, continuous seamless loop.",
+      "requestedDurationSeconds": 10,
+      "loopRequested": true,
+      "original": "AudioSources/Runway/WindowBreeze_Loop.mp3",
+      "derived": "Assets/Audio/Clips/Ambience/WindowBreeze_Loop.wav",
+      "status": "provisional, generado con IA; pendiente de revisión auditiva y mejora en REAPER",
+      "provider": "Runway"
+    }
+  ],
+  "tratamiento": "Decodificación en Unity; mono para fuentes 3D; crossfade circular lineal de 150 ms; ajuste de RMS y techo de pico de -6 dBFS; WAV PCM16. Ver mediciones en Docs."
+}
