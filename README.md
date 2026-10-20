@@ -13,3 +13,5 @@ Detalles, recursos pendientes y pruebas: [Docs/P2_AUDIO_AMBIENCE.md](Docs/P2_AUD
 Library, Temp, cachés y Builds se excluyen de Git. PawsBeyond y PawsBeyond-P1 se conservan como proyectos separados.
 
 Integración actual y pruebas técnicas de audio: [Docs/P2_AUDIO_RUNWAY.md](Docs/P2_AUDIO_RUNWAY.md).
+
+Organización de originales, pruebas y audios en uso: [Docs/ORDEN_AUDIO.md](Docs/ORDEN_AUDIO.md).

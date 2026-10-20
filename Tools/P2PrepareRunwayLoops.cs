@@ -17,8 +17,8 @@ public static class P2PrepareRunwayLoops
         var rows=new List<object>();
         foreach(string name in new[]{"NightHouse_Loop","TV_Nonverbal_Loop","FridgeMotor_Loop","WindowBreeze_Loop"})
         {
-            string path=Path.Combine(root,"AudioSources/Runway",name+".mp3");
-            string output="Assets/Audio/Clips/Ambience/"+name+".wav";
+            string path=Path.Combine(root,"AudioSources/Originales/Runway",name+".mp3");
+            string output="Assets/Audio/EnUso/Ambientes/"+name+".wav";
             if(File.Exists(Path.Combine(root,output))) throw new Exception("No sobrescribir el clip existente: "+output);
             using(var request=UnityWebRequestMultimedia.GetAudioClip(new Uri(path).AbsoluteUri,AudioType.MPEG))
             {

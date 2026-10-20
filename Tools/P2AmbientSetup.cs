@@ -22,7 +22,7 @@ public static class P2AmbientSetup
             .Where(x=>x && !(x is Transform) && !(x is AudioSource)).ToDictionary(x=>x, x=>EditorJsonUtility.ToJson(x));
         var transforms = UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsInactive.Include,FindObjectsSortMode.None)
             .ToDictionary(x=>x,x=>new TransformSnapshot { position=x.localPosition, rotation=x.localRotation, scale=x.localScale, parent=x.parent });
-        foreach (var path in new[]{"Assets/Audio","Assets/Audio/Clips","Assets/Audio/Clips/Ambience","Assets/Audio/Mixers"})
+        foreach (var path in new[]{"Assets/Audio","Assets/Audio/EnUso","Assets/Audio/EnUso/Ambientes","Assets/Audio/Mezcladores"})
             if(!AssetDatabase.IsValidFolder(path)) AssetDatabase.CreateFolder(System.IO.Path.GetDirectoryName(path).Replace('\\','/'),System.IO.Path.GetFileName(path));
         var mixPaths = AssetDatabase.FindAssets("t:AudioMixer",new[]{"Assets"}).Select(AssetDatabase.GUIDToAssetPath).ToArray();
         var groups = mixPaths.Select(AssetDatabase.LoadAssetAtPath<AudioMixer>).SelectMany(m=>m.FindMatchingGroups(""))
@@ -55,7 +55,7 @@ public static class P2AmbientSetup
         if(!go){go=new GameObject(name); Undo.RegisterCreatedObjectUndo(go,"Create audio emitter"); go.transform.SetParent(parent,true); go.transform.position=position;}
         var source=go.GetComponent<AudioSource>(); if(!source) source=Undo.AddComponent<AudioSource>(go);
         Undo.RecordObject(source,"Configure ambience");
-        var clips=AssetDatabase.FindAssets(clipName+" t:AudioClip",new[]{"Assets/Audio/Clips/Ambience"});
+        var clips=AssetDatabase.FindAssets(clipName+" t:AudioClip",new[]{"Assets/Audio/EnUso/Ambientes"});
         if(!source.clip && clips.Length==1) source.clip=AssetDatabase.LoadAssetAtPath<AudioClip>(AssetDatabase.GUIDToAssetPath(clips[0]));
         source.playOnAwake=true; source.loop=true; source.spatialBlend=spatial; source.volume=volume;
         source.dopplerLevel=0f; source.rolloffMode=AudioRolloffMode.Linear; source.minDistance=min; source.maxDistance=max;

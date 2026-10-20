@@ -19,9 +19,9 @@ No se usó Streaming: son loops cortos. Se precargan y la carga en segundo plano
 
 ## Procedencia y preparación
 
-- Originales MP3: `AudioSources/Runway/`. Se conservan sin modificación, con sus huellas SHA-256.
-- `AudioSources/Runway/procedencia.json`: prompts, identificadores de generación y correspondencia con cada WAV. No contiene enlaces privados temporales.
-- Copias para Unity: `Assets/Audio/Clips/Ambience/`, WAV PCM16. Convertir a WAV **no recupera** información perdida por el MP3 generado.
+- Originales MP3: `AudioSources/Originales/Runway/`. Se conservan sin modificación, con sus huellas SHA-256.
+- `AudioSources/Originales/Runway/procedencia.json`: prompts, identificadores de generación y correspondencia con cada WAV. No contiene enlaces privados temporales.
+- Copias para Unity: `Assets/Audio/EnUso/Ambientes/`, WAV PCM16. Convertir a WAV **no recupera** información perdida por el MP3 generado.
 - Herramienta fuera de Assets: `Tools/P2PrepareRunwayLoops.cs`. Decodifica con Unity, pasa a mono las tres fuentes 3D, aplica un crossfade circular lineal de 150 ms y ajusta RMS con techo de pico de -6 dBFS. No agrega scripts runtime. No sobrescribe WAV existentes.
 - La duración importada observada es aproximadamente 10,038 s por WAV; difiere de los 10 s solicitados por la decodificación del MP3 y el procesamiento. No se declara un loop perfecto de oído.
 - Pico/RMS y diferencia entre muestras de la unión: `Docs/P2_AUDIO_RUNWAY_MEDICIONES.json`. Son mediciones de los WAV preparados, no del Audio Profiler.
