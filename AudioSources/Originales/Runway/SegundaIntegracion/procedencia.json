@@ -1,0 +1,56 @@
+{
+  "fecha": "2026-10-21",
+  "nota": "Generados con IA a pedido del usuario para pruebas; reemplazables por producción propia. No constituyen voz humana grabada por el estudiante.",
+  "recursos": [
+    {
+      "nombre": "SinkDrip_Loop",
+      "proveedor": "Runway",
+      "temporal": true,
+      "duracionSolicitada": 10,
+      "loopSolicitado": true,
+      "prompt": "Small bathroom faucet dripping into a ceramic sink at night. Soft individual water drops, naturally spaced every one to three seconds, subtly varied. Dry close recording, quiet room. No running stream, no flushing toilet, no voices, no music. Continuous seamless loop.",
+      "taskId": "bfe5bdfd-2325-4477-8019-86812ae70447",
+      "original": "AudioSources/Originales/Runway/SegundaIntegracion/SinkDrip_Loop.mp3"
+    },
+    {
+      "nombre": "DogPaw_01",
+      "proveedor": "Runway",
+      "temporal": true,
+      "duracionSolicitada": 1,
+      "loopSolicitado": false,
+      "prompt": "One single quiet small dog paw contact on indoor ceramic tile: a soft padded tap with a very subtle nail click. Dry close Foley. One brief isolated footstep near the beginning, then silence. No walking sequence, no bark, no breathing, no music.",
+      "taskId": "1f270b66-3fbf-47b2-a690-252897853120",
+      "original": "AudioSources/Originales/Runway/SegundaIntegracion/DogPaw_01.mp3"
+    },
+    {
+      "nombre": "DogPaw_02",
+      "proveedor": "Runway",
+      "temporal": true,
+      "duracionSolicitada": 1,
+      "loopSolicitado": false,
+      "prompt": "One isolated gentle dog paw step on ceramic floor, a slightly duller padded tap and tiny claw tick. Close dry Foley, short natural decay. Exactly one contact at the beginning, followed by silence. No footsteps sequence, no voice, no bark, no music.",
+      "taskId": "e23ce11f-120c-40fc-9122-f22f0cb2197b",
+      "original": "AudioSources/Originales/Runway/SegundaIntegracion/DogPaw_02.mp3"
+    },
+    {
+      "nombre": "DogPaw_03",
+      "proveedor": "Runway",
+      "temporal": true,
+      "duracionSolicitada": 1,
+      "loopSolicitado": false,
+      "prompt": "Single soft dog paw touching a household tile floor, light cushiony contact with a delicate high nail click, a slightly lighter variation. Close dry recording, brief sound then silence. Not a walking loop. No bark, no voice, no music.",
+      "taskId": "3c269c01-3ab2-441c-be56-02ce50166bb8",
+      "original": "AudioSources/Originales/Runway/SegundaIntegracion/DogPaw_03.mp3"
+    },
+    {
+      "nombre": "DogBark_01",
+      "proveedor": "Runway",
+      "temporal": true,
+      "duracionSolicitada": 2,
+      "loopSolicitado": false,
+      "prompt": "One short natural bark from a small domestic dog seeking its owner's attention, alert but friendly, not aggressive. Dry close recording in a quiet room. Exactly one bark, natural decay then silence. No other animals, no human voices, no growling, no music.",
+      "taskId": "dc467bcb-d3c9-4346-af87-f97d4e7f00cd",
+      "original": "AudioSources/Originales/Runway/SegundaIntegracion/DogBark_01.mp3"
+    }
+  ]
+}

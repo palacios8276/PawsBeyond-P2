@@ -9,3 +9,5 @@
 Para sustituir un audio ya asignado, conservar el nombre del WAV y su .meta. Para mover assets, usar el panel Project de Unity: así se mantienen sus GUID y referencias. No cambiar los originales ni presentar recursos generados con IA como grabaciones propias.
 
 Las rutas del informe inicial P2_AUDIO_AMBIENCE.md describen el estado histórico anterior a esta organización. El informe actual P2_AUDIO_RUNWAY.md y las herramientas ya usan las rutas nuevas.
+
+Segunda integración: patitas activas en EnUso/Efectos; ladrido sin evento en Pruebas/Efectos. Ver PAWS_BEYOND_P2_AUDIO_INFORME.md para estados actuales.

@@ -1,0 +1,47 @@
+[
+  {
+    "name": "SinkDrip_Loop",
+    "path": "Assets/Audio/EnUso/Ambientes/SinkDrip_Loop.wav",
+    "seconds": 10.037755102040816,
+    "peak": 0.45,
+    "rms": 0.00496381475,
+    "frequency": 44100,
+    "channels": 1
+  },
+  {
+    "name": "DogPaw_01",
+    "path": "Assets/Audio/EnUso/Efectos/DogPaw_01.wav",
+    "seconds": 0.3,
+    "peak": 0.45,
+    "rms": 0.0770978853,
+    "frequency": 44100,
+    "channels": 1
+  },
+  {
+    "name": "DogPaw_02",
+    "path": "Assets/Audio/EnUso/Efectos/DogPaw_02.wav",
+    "seconds": 0.2144671201814059,
+    "peak": 0.45,
+    "rms": 0.0124619612,
+    "frequency": 44100,
+    "channels": 1
+  },
+  {
+    "name": "DogPaw_03",
+    "path": "Assets/Audio/EnUso/Efectos/DogPaw_03.wav",
+    "seconds": 0.3,
+    "peak": 0.45,
+    "rms": 0.0468498,
+    "frequency": 44100,
+    "channels": 1
+  },
+  {
+    "name": "DogBark_01",
+    "path": "Assets/Audio/Pruebas/Efectos/DogBark_01.wav",
+    "seconds": 1.4067800453514738,
+    "peak": 0.45,
+    "rms": 0.07411276,
+    "frequency": 44100,
+    "channels": 1
+  }
+]

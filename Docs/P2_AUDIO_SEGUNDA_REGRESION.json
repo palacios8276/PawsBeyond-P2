@@ -1,0 +1,17 @@
+{
+  "fecha": "2026-10-21",
+  "regresion": "PASS P1Smoke con teclado virtual temporal: tres prendas, E, abducción, puerta libre y recorrido completo",
+  "duracionSegundos": 92.328,
+  "primerosIntentos": "P1Smoke y QAControlsSmoke no observaron movimiento W inyectado sobre teclado nativo sin foco",
+  "controlesFisicos": "No ejecutados",
+  "dispositivoTemporal": "P2QA_VirtualKeyboard retirado al finalizar",
+  "auditoriaReferencias": "PASS PolishAudit",
+  "archivosJugablesPreviosModificados": 0,
+  "consoleAgrupada": { "errores": 1, "advertencias": 1 },
+  "mensajesRetenidos": { "comandoEstadoIncompatibleCLI": 10, "timeoutPipeline": 2, "cuentaUnityNoAccesible": 5 },
+  "falloCompilacion": false,
+  "excepcionesAudioDetectadas": false,
+  "escenaFinal": "Guardada, recargada desde disco y fuera de Play",
+  "escuchaPerceptual": "Pendiente",
+  "webGL": "No ejecutado"
+}

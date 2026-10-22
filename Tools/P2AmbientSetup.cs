@@ -34,7 +34,7 @@ public static class P2AmbientSetup
         Make("AUDIO-01_NightAmbience",null,new Vector3(0,0,0),0f,0.20f,1f,1f,"NightHouse_Loop",group,rows);
         var tv=GameObject.Find("TV"); var fridge=GameObject.Find("Fridge"); var bedroom=GameObject.Find("BedroomFurniture");
         if(tv) Make("AUDIO-02_TV",tv.transform,tv.transform.position,1f,0.35f,1.5f,10f,"TV_Nonverbal_Loop",group,rows);
-        if(fridge) Make("AUDIO-03_Fridge",fridge.transform,new Vector3(1f,0.45f,-19f),1f,0.30f,1f,6f,"FridgeMotor_Loop",group,rows);
+        if(fridge) Make("AUDIO-03_Fridge",fridge.transform,new Vector3(1f,0.45f,-19f),1f,0.45f,2.5f,7f,"FridgeMotor_Loop",group,rows);
         if(bedroom && GameObject.Find("BRWall_west (2)") && GameObject.Find("BRWall_west (3)"))
             Make("AUDIO-05_WindowBreeze",bedroom.transform,new Vector3(-17.6f,1.5f,3.85f),1f,0.25f,1f,6f,"WindowBreeze_Loop",group,rows);
         var changed=original.Where(x=>EditorJsonUtility.ToJson(x.Key)!=x.Value).Select(x=>x.Key.name+":"+x.Key.GetType().Name).ToArray();

@@ -1,0 +1,72 @@
+[
+  {
+    "test": "Pasos",
+    "result": "PASS automático",
+    "played": 5,
+    "quietStops": true,
+    "rotationSilent": true
+  },
+  {
+    "test": "AUDIO-03_Fridge",
+    "result": "PASS técnico de atenuación",
+    "measurements": [
+      {
+        "distance": 1.0,
+        "rms": 0.025368664651312781,
+        "peak": 0.0637911856
+      },
+      {
+        "distance": 3.5,
+        "rms": 0.016974625709880529,
+        "peak": 0.0385170542
+      },
+      {
+        "distance": 9.0,
+        "rms": 0.0,
+        "peak": 0.0
+      }
+    ]
+  },
+  {
+    "test": "AUDIO-05_WindowBreeze",
+    "result": "PASS técnico de atenuación",
+    "measurements": [
+      {
+        "distance": 1.0,
+        "rms": 0.01431544563227107,
+        "peak": 0.03744961
+      },
+      {
+        "distance": 3.5,
+        "rms": 0.0075938884166361232,
+        "peak": 0.0154347578
+      },
+      {
+        "distance": 7.0,
+        "rms": 0.0,
+        "peak": 0.0
+      }
+    ]
+  },
+  {
+    "test": "AUDIO-05_SinkDrip",
+    "result": "PASS técnico de atenuación",
+    "measurements": [
+      {
+        "distance": 1.0,
+        "rms": 0.00079899009923828162,
+        "peak": 0.0577147342
+      },
+      {
+        "distance": 3.5,
+        "rms": 0.00031241439053151994,
+        "peak": 0.0237289444
+      },
+      {
+        "distance": 7.0,
+        "rms": 0.0,
+        "peak": 0.0
+      }
+    ]
+  }
+]
