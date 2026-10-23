@@ -36,3 +36,14 @@ unity command run_script --caller plugin --skill unity-cli --project-path 'C:/Us
 Ejecutar cada prueba en Play nuevo. Para el caso temprano, antes de Play preparar maximumStartWait=30 sin guardar; el harness restablece 3 al comenzar y verifica que aún no inició. Al terminar salir de Play y recargar Playground guardada; no guardar cambios de preparación. Los helpers no forman parte del juego.
 
 P2Phase1LateEntrySmoke: PASS automático adicional. Dueños primero esperan sin activar; entrada posterior del perro activa tres prendas. Evidencia: P2_FASE1_BANO_LLEGADA_TARDIA.json. Ambos casos de llegada quedaron ejecutados; pendiente retesting manual exploratorio.
+
+## Bloque 2 — Ladridos por pulsación
+
+- Acción Bark agregada al mapa Player existente: B y <Gamepad>/buttonWest (cuadrado PS5 / X de Xbox), interacción Press Only. E/botón sur conservan Interact. Asignación provisional para revisión.
+- PlayerBark en Player habilita solo su acción de entrada, con minimumInterval=0,45 s ajustable y UnityEvent onBarked para conexiones futuras. No modifica movimiento/cámara ni implementa rayo/IA.
+- Reutiliza DogBarkAudio y AUDIO-09_DogBark. Asignar clips en variants de DogBarkAudio; volumen, pitch, mezcla y alcance se configuran en su AudioSource. Una pulsación válida reinicia el único emisor; no apila voces del clip provisional largo. Si falta audio válido, no confirma el ladrido ni emite evento.
+- El importador nativo regeneró PlayerInputActions.cs desde el asset de acciones; no se editó manualmente el wrapper. GUID/meta existentes preservados.
+
+P2Phase1BarkSmoke: PASS automático en Play, cuatro ladridos aceptados. B y botón oeste virtual funcionan; mantener no repite, soltar no dispara, el cooldown filtra pulsaciones demasiado próximas y deshabilitar/rehabilitar no duplica suscripciones. El evento ocurre con el AudioSource iniciado y se midió salida PCM no silenciosa. Botón sur no genera ladrido. Evidencia: P2_FASE1_LADRIDOS_PRUEBA.json. Falta teclado/PS5 físicos y escucha perceptual.
+
+Archivos: Assets/Input/PlayerInputActions.inputactions y wrapper .cs; Assets/Scripts/Player/PlayerBark.cs y meta; Assets/Scripts/Audio/DogBarkAudio.cs; Playground; Tools/P2Phase1BarkSmoke.cs; evidencia JSON y este registro.

@@ -32,6 +32,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Bark",
+                    "type": "Button",
+                    "id": "106b73fd-2def-4b77-85c9-53d0004ec05f",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "press(behavior=0)",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -142,6 +151,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Interact",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "2688a860-cb6c-4621-9b90-056dae23e538",
+                    "path": "<Keyboard>/b",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Bark",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "046fd4b9-c59e-42df-a13a-de4eb182da88",
+                    "path": "<Gamepad>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Bark",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

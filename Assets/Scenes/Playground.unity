@@ -524,6 +524,7 @@ GameObject:
   - component: {fileID: 75761118}
   - component: {fileID: 75761119}
   - component: {fileID: 75761120}
+  - component: {fileID: 75761121}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -671,6 +672,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pushPower: 2
+--- !u!114 &75761121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 75761112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6349b71bed4629b41a1a40baa3adbc5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  barkAudio: {fileID: 400004219}
+  minimumInterval: 0.45
+  onBarked:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &84629204
 GameObject:
   m_ObjectHideFlags: 0
