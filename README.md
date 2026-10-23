@@ -17,3 +17,5 @@ Integración actual y pruebas técnicas de audio: [Docs/P2_AUDIO_RUNWAY.md](Docs
 Organización de originales, pruebas y audios en uso: [Docs/ORDEN_AUDIO.md](Docs/ORDEN_AUDIO.md).
 
 Segunda integración de audio: [informe para Audio Interactivo](Docs/PAWS_BEYOND_P2_AUDIO_INFORME.md).
+
+Fase 1: estabilización del baño, ladridos con B/cuadrado del mando y ondas nativas. Cambios, pruebas y validación manual pendiente: [registro de Fase 1](Docs/P2_FASE_1.md).

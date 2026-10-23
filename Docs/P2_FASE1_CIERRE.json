@@ -1,0 +1,33 @@
+{
+  "fecha": "2026-10-23",
+  "referencias": {
+    "output": null,
+    "diagnostics": [],
+    "success": true,
+    "result": "PASS referencias: missingScripts=0, brokenReferences=0, CharacterController sin Rigidbody; Bark listeners=1, maximumStartWait=3, moveSpeed=1,1, sceneDirty=False, playing=False"
+  },
+  "console": {
+    "entries": [],
+    "cursor": 275,
+    "session": "d2797ac3074d4d2c82446b9595a33f23",
+    "returned": 0,
+    "dropped": false,
+    "reset": false,
+    "counts": {
+      "error": 0,
+      "warn": 14,
+      "log": 261
+    },
+    "groundTruth": {
+      "sampledUtc": "2026-10-23T05:29:55.4836439Z",
+      "ageMs": 190,
+      "compilationFailed": false,
+      "compiling": false,
+      "consoleErrors": 0,
+      "consoleWarnings": 1,
+      "consoleLogs": 58,
+      "seeded": true
+    }
+  },
+  "alcance": "Solo P2; fuera de Play, escena guardada y sin preparación de pruebas; sin build ni validación física manual"
+}

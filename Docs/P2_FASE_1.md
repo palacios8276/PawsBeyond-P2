@@ -47,3 +47,37 @@ P2Phase1LateEntrySmoke: PASS automático adicional. Dueños primero esperan sin 
 P2Phase1BarkSmoke: PASS automático en Play, cuatro ladridos aceptados. B y botón oeste virtual funcionan; mantener no repite, soltar no dispara, el cooldown filtra pulsaciones demasiado próximas y deshabilitar/rehabilitar no duplica suscripciones. El evento ocurre con el AudioSource iniciado y se midió salida PCM no silenciosa. Botón sur no genera ladrido. Evidencia: P2_FASE1_LADRIDOS_PRUEBA.json. Falta teclado/PS5 físicos y escucha perceptual.
 
 Archivos: Assets/Input/PlayerInputActions.inputactions y wrapper .cs; Assets/Scripts/Player/PlayerBark.cs y meta; Assets/Scripts/Audio/DogBarkAudio.cs; Playground; Tools/P2Phase1BarkSmoke.cs; evidencia JSON y este registro.
+
+## Bloque 3 — Onda visual y regresión de controles
+
+- BarkWave es hijo de InteractionOrigin; BarkWaveVfx recibe mouth=InteractionOrigin como referencia editable. Se sincroniza mediante un único listener persistente de PlayerBark.onBarked, sin conocer rayo, aliens o puzzles.
+- ParticleSystem nativo en espacio mundial: anillo provisional de 12 puntos suaves cian, duración 0,4 s, tamaño 0,08 m, radio inicial 0,06 m, expansión 0,8 m/s y avance 1,2 m/s. Todos esos valores y el color están expuestos en BarkWaveVfx.
+- Sin loop, Play On Awake ni emisión por tiempo. Cada emisión válida limpia la anterior; máximo de partículas igual al tamaño de la onda. OnDisable limpia partículas. Material URP Unlit de partículas y textura pequeña de punto generada localmente; sin recursos externos ni sistemas de daño.
+- Configuración reproducible: Tools/P2Phase1WaveSetup.cs sobre Playground guardada fuera de Play. Reutiliza el objeto/material existentes y evita duplicar el listener.
+
+P2Phase1WaveSmoke: PASS automático. Dos emisiones en el mismo frame que su audio/evento, 12 partículas máximas, distribución en mundo, expiración, sin repetición por tecla mantenida ni onda ante pulsación rechazada o fuente de audio deshabilitada. Se inspeccionó visualmente la captura real de Play: anillo cian visible delante del placeholder. Temp/P2Phase1_BarkWave.png permanece ignorado por Git.
+
+P2Phase1ControlsSmoke: PASS con teclado, mouse y gamepad virtuales. W/S desplazan en sentidos opuestos y orientan al perro, la cámara no gira por su yaw; mouse y stick derecho orbitan, stick izquierdo desplaza, W+B no bloquea movimiento, E fuera de rango no agarra ni ladra; CharacterController sin Rigidbody y un solo Listener.
+
+Evidencias: P2_FASE1_ONDA_PRUEBA.json y P2_FASE1_CONTROLES_PRUEBA.json. Estos resultados no certifican teclado/PS5 físicos, sensación de cámara, volumen subjetivo ni naturalidad del sonido.
+
+Archivos del bloque 3: Assets/Scripts/Effects/BarkWaveVfx.cs y metas; Assets/Materials/BarkWave.mat y BarkWaveDot.png con metas; Playground; Tools/P2Phase1WaveSetup.cs, P2Phase1WaveSmoke.cs y P2Phase1ControlsSmoke.cs; evidencias JSON, README y este registro.
+
+## Pendientes manuales y siguiente incremento
+
+- Repetir QA-04/05/06 de forma exploratoria con teclado y PS5: salir rápido del dormitorio, ambos órdenes de llegada, empujar/apilar prendas y buscar ambos laterales del acceso; comprobar apertura final hacia el lado único.
+- Probar B/cuadrado con el mando físico y teclado real, rapidez de pulsación, convivencia con E y movimiento, y balance del clip provisorio con los ambientes.
+- Ajustar visualmente origen, tamaño y lectura de la onda al girar/mover el perro y al incorporar su modelo definitivo. Ajustar Spring/Damper de BathroomDoor solo si la sensación de apertura lo requiere.
+- Próximo incremento recomendado: prototipo del rayo de cuatro estados y recuperación gradual, conectado al evento existente del ladrido, tras aprobación de esa etapa. No se implementa aquí.
+
+No se implementaron IA, interferencia del rayo, tutorial completo, cinco episodios, sacudida/lanzamiento, nueva UI ni cambios al diseño de casa. Los resultados históricos de Testing P1 se preservan; estas pruebas son retesting técnico nuevo de P2.
+
+## Cierre de la fase
+
+- Regresión integrada del baño repetida después de agregar Input Bark y onda: PASS (P2_FASE1_INTEGRACION_BANO_PRUEBA.json, 58,2 s). Nuevamente: entrada temprana, inicio de respaldo, 28 intentos de escape, E con tres prendas, apertura, reentrada y continuación a cocina.
+- Llegada tardía, ladridos, partículas y controles: PASS en sus pruebas descritas arriba. No se ejecutó una prueba física/manual nueva.
+- Inspección final: 0 scripts faltantes, 0 referencias rotas detectadas, un listener persistente de onda, CharacterController sin Rigidbody; velocidad de dueños 1,1 m/s y maximumStartWait=3 s restaurados. Escena guardada, fuera de Play y sin cambios de preparación. Evidencia P2_FASE1_CIERRE.json.
+- Console: 0 errores, compilationFailed=false; conserva 1 advertencia agrupada previa de Unity AI Account API. No se limpió Console.
+- PlayerMovement, ThirdPersonCameraInput, CameraTargetFollow, PlayerInteraction, BasketDrag, prefabs, Packages, ProjectSettings y Mixer sin diferencias frente a la base 30f2b1a.
+- Las herramientas heredadas P1Smoke/NarrativeWaitSmoke describen condiciones antiguas (puerta intentando abrir contra ropa e inicio solo por observación). Para esta fase usar las pruebas nuevas; no interpretar esos contratos anteriores como criterios actuales ni reescribir el informe histórico P1.
+- Commits por bloque: e157f15 (estabilización), 98351ea (ladridos) y commit de partículas que contiene este cierre. Títulos y descripciones en español. Sin push, tags ni builds.

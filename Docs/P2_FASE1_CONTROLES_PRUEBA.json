@@ -1,0 +1,8 @@
+{
+  "diagnostics": [],
+  "compileMs": 2015,
+  "executeMs": 3176,
+  "assemblyName": "PipelineRunScript_P2Phase1ControlsSmoke_f7faca54ddbd41a0a23848ea329876d7",
+  "success": true,
+  "result": "PASS automático con teclado/mouse/mando virtuales: W/S y giro, órbita independiente, mouse y dos sticks, W+B simultáneo, E fuera de rango, CharacterController y Listener único. No valida dispositivos físicos ni sensación de control."
+}

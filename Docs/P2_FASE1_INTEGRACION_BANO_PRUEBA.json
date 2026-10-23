@@ -1,0 +1,8 @@
+{
+  "diagnostics": [],
+  "compileMs": 2175,
+  "executeMs": 58225,
+  "assemblyName": "PipelineRunScript_P2Phase1BathroomSmoke_7e822be94d8d411ca86add5fa353b3c5",
+  "success": true,
+  "result": "PASS automático: entrada temprana, inicio sin observación, 28 intentos de escape por altura/lateral, cierre estable, E con 3 prendas, apertura, reentrada y continuación. Preparación: velocidad de dueños 8 m/s y posiciones controladas solo en Play; controles virtuales, no prueba manual."
+}

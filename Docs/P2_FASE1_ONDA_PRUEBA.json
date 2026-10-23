@@ -1,0 +1,8 @@
+{
+  "diagnostics": [],
+  "compileMs": 2811,
+  "executeMs": 2227,
+  "assemblyName": "PipelineRunScript_P2Phase1WaveSmoke_225f1bbd85fe40fcb36cc69dec7ef5ea",
+  "success": true,
+  "result": "PASS automático: 2 ladridos/ondas sincronizados en el mismo frame, 12 partículas máximas, expiración, sin repetición mantenida, sin onda para pulsación rechazada o audio ausente. Captura Temp/P2Phase1_BarkWave.png; pendiente apreciación manual."
+}
