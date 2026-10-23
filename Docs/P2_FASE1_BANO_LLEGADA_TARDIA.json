@@ -1,0 +1,8 @@
+{
+  "diagnostics": [],
+  "compileMs": 2311,
+  "executeMs": 14526,
+  "assemblyName": "PipelineRunScript_P2Phase1LateEntrySmoke_c1d615904c1c4b29b9c0ab18c7b0f947",
+  "success": true,
+  "result": "PASS automático: dueños primero no disparan caída; ingreso posterior del perro activa una vez. Velocidad 8 m/s y posición controlada solo en Play."
+}

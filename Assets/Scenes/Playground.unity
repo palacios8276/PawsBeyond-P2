@@ -10469,6 +10469,8 @@ MonoBehaviour:
   onJourneyStarted:
     m_PersistentCalls:
       m_Calls: []
+  automaticStart: 1
+  maximumStartWait: 3
 --- !u!65 &807891695
 BoxCollider:
   m_ObjectHideFlags: 0

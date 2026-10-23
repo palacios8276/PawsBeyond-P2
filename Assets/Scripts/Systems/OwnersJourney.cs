@@ -19,6 +19,10 @@ public class OwnersJourney : MonoBehaviour
     [SerializeField] private HingeJoint bathroomDoor;
     [SerializeField] private BathroomBasketDrop bathroomPuzzle;
     [SerializeField] private UnityEvent onJourneyStarted = new UnityEvent();
+    [SerializeField] private bool automaticStart = true;
+    [SerializeField, Min(0.1f)] private float maximumStartWait = 3f;
+    private bool playerVisited;
+    private float startWait;
     private bool playerPresent;
     private float observed;
     private float delay;
@@ -33,13 +37,23 @@ public class OwnersJourney : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (other.GetComponentInParent<CharacterController>() && other.transform.root.CompareTag("Player"))
-            playerPresent = true;
+        { playerPresent = true; playerVisited = true; }
     }
 
     private void OnTriggerExit(Collider other)
     {
         if (!HasStarted && other.GetComponentInParent<CharacterController>() && other.transform.root.CompareTag("Player"))
             playerPresent = false;
+    }
+
+    // Puede llamarse desde el futuro tutorial con automaticStart desactivado.
+    public void BeginJourney()
+    {
+        if (HasStarted || !enabled) return;
+        HasStarted = true;
+        delay = departureDelay;
+        GetComponent<BoxCollider>().enabled = false;
+        onJourneyStarted.Invoke();
     }
 
     private bool OwnersInView()
@@ -58,12 +72,11 @@ public class OwnersJourney : MonoBehaviour
     {
         if (!HasStarted)
         {
-            observed = playerPresent && OwnersInView() ? observed + Time.deltaTime : 0f;
-            if (observed < observationTime) return;
-            HasStarted = true;
-            delay = departureDelay;
-            GetComponent<BoxCollider>().enabled = false;
-            onJourneyStarted.Invoke();
+            if (!automaticStart || !playerVisited) return;
+            startWait += Time.deltaTime;
+            if (playerPresent && OwnersInView()) observed += Time.deltaTime;
+            if (observed < observationTime && startWait < maximumStartWait) return;
+            BeginJourney();
         }
         if (delay > 0f) { delay -= Time.deltaTime; return; }
         if (IsComplete) return;
@@ -85,7 +98,11 @@ public class OwnersJourney : MonoBehaviour
         if (next > bathroomExit) bathroomTrigger.SetNarrativePresence(false);
         transform.position = Vector3.MoveTowards(transform.position, waypoints[next].position, moveSpeed * Time.deltaTime);
         if (Vector3.Distance(transform.position, waypoints[next].position) > 0.01f) return;
-        if (next == bathroomStop && !bathroomPuzzle.IsSolved) return;
+        if (next == bathroomStop)
+        {
+            bathroomPuzzle.NotifyOwnersArrived();
+            if (!bathroomPuzzle.IsSolved) return;
+        }
         next++;
     }
 

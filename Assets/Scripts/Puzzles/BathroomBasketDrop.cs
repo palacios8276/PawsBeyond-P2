@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -15,6 +16,9 @@ public class BathroomBasketDrop : MonoBehaviour
     [SerializeField] private UnityEvent onSolved = new UnityEvent();
     [SerializeField] private UnityEvent onAbductionStarted = new UnityEvent();
     [SerializeField] private UnityEvent onBasketRemoved = new UnityEvent();
+    private readonly HashSet<Collider> playersInside = new HashSet<Collider>();
+    private bool ownersArrived;
+    private bool initialized;
     private Rigidbody[] clothes;
     private bool activated;
     private bool ready;
@@ -41,6 +45,7 @@ public class BathroomBasketDrop : MonoBehaviour
         laundryBasketRigidbody.isKinematic = true;
         if (interferenceLight) interferenceLight.enabled = false;
         if (abductionBeam) abductionBeam.SetActive(false);
+        initialized = true;
         clothes = new Rigidbody[clothingSpawns.Length];
         for (int i = 0; i < clothes.Length; i++)
         {
@@ -52,10 +57,27 @@ public class BathroomBasketDrop : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    // La llegada narrativa y la presencia del perro pueden ocurrir en cualquier orden.
+    public void NotifyOwnersArrived()
     {
-        if (!enabled || activated || !other.GetComponentInParent<CharacterController>()
-            || !other.transform.root.CompareTag("Player")) return;
+        ownersArrived = true;
+        TryActivate();
+    }
+
+    private void OnTriggerEnter(Collider other) => TrackPlayer(other);
+    private void OnTriggerStay(Collider other) => TrackPlayer(other);
+    private void OnTriggerExit(Collider other) => playersInside.Remove(other);
+
+    private void TrackPlayer(Collider other)
+    {
+        if (!other.GetComponentInParent<CharacterController>() || !other.transform.root.CompareTag("Player")) return;
+        playersInside.Add(other);
+        TryActivate();
+    }
+
+    private void TryActivate()
+    {
+        if (!enabled || activated || !initialized || !ownersArrived || playersInside.Count == 0) return;
         activated = true;
         StartCoroutine(DropLaundry());
     }
@@ -66,13 +88,14 @@ public class BathroomBasketDrop : MonoBehaviour
         doorTrigger.CloseForPuzzle(true);
         if (interferenceLight) interferenceLight.enabled = true;
         while (Mathf.Abs(doorHinge.angle) > 1.5f) yield return null;
+        doorTrigger.LockForPuzzle();
         laundryBasketRigidbody.isKinematic = false;
         for (int i = 0; i < clothes.Length; i++)
             clothes[i].isKinematic = false;
         yield return new WaitForSeconds(0.9f);
         if (interferenceLight) interferenceLight.enabled = false;
         ready = true;
-        doorTrigger.CloseForPuzzle(false);
+
         Debug.Log("Bathroom: remove the clothes with Interact to free the door.", this);
     }
 
@@ -96,6 +119,7 @@ public class BathroomBasketDrop : MonoBehaviour
             ? clearTime + Time.fixedDeltaTime : 0f;
         if (clearTime < 0.4f) return;
         IsSolved = true;
+        doorTrigger.CloseForPuzzle(false);
         onSolved.Invoke();
         StartCoroutine(AbductBasket());
         Debug.Log("Bathroom puzzle solved: clothes removed, door free.", this);

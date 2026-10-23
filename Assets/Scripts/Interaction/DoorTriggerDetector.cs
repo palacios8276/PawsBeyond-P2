@@ -9,6 +9,9 @@ public class DoorTriggerDetector : MonoBehaviour
     private readonly HashSet<Collider> occupants = new HashSet<Collider>();
     private bool closingForPuzzle;
     private bool narrativePresence;
+    private RigidbodyConstraints unlockedConstraints;
+    private float lastTarget = float.NaN;
+    public bool IsPuzzleLocked { get; private set; }
 
     public void SetNarrativePresence(bool present)
     {
@@ -25,8 +28,25 @@ public class DoorTriggerDetector : MonoBehaviour
 
     public void CloseForPuzzle(bool closing)
     {
+        if (!closing && IsPuzzleLocked)
+        {
+            doorHinge.GetComponent<Rigidbody>().constraints = unlockedConstraints;
+            IsPuzzleLocked = false;
+        }
         closingForPuzzle = closing;
         RefreshTarget();
+    }
+
+    // Conserva Rigidbody y bisagra: inmoviliza el acceso cerrado, no al jugador.
+    public void LockForPuzzle()
+    {
+        if (!doorHinge || IsPuzzleLocked) return;
+        var body = doorHinge.GetComponent<Rigidbody>();
+        unlockedConstraints = body.constraints;
+        body.linearVelocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
+        body.constraints = RigidbodyConstraints.FreezeAll;
+        IsPuzzleLocked = true;
     }
 
     private void Start()
@@ -42,7 +62,8 @@ public class DoorTriggerDetector : MonoBehaviour
 
     private void SetTarget(float target)
     {
-        if (!doorHinge) return;
+        if (!doorHinge || Mathf.Approximately(lastTarget, target)) return;
+        lastTarget = target;
         var spring = doorHinge.spring;
         spring.targetPosition = target;
         doorHinge.spring = spring;
@@ -62,4 +83,3 @@ public class DoorTriggerDetector : MonoBehaviour
         if (occupants.Remove(other)) RefreshTarget();
     }
 }
-
