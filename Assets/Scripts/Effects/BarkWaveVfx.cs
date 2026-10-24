@@ -11,6 +11,9 @@ public sealed class BarkWaveVfx : MonoBehaviour
     [SerializeField, Min(0f)] private float expansionSpeed = 0.8f;
     [SerializeField, Min(0f)] private float travelSpeed = 1.2f;
     [SerializeField] private Color color = new Color(0.3f, 0.9f, 1f, 0.9f);
+    [SerializeField] private PlayerBark barkSource;
+    [SerializeField] private Color reinforcedColor = new Color(1f, 0.6f, 0.12f, 0.95f);
+    [SerializeField, Range(1f, 2f)] private float reinforcedSizeMultiplier = 1.3f;
     public int EmissionCount { get; private set; }
     public int LastEmissionFrame { get; private set; } = -1;
 
@@ -35,6 +38,7 @@ public sealed class BarkWaveVfx : MonoBehaviour
     public void EmitWave()
     {
         if (!isActiveAndEnabled || !wave || !mouth) return;
+        bool reinforced = barkSource && barkSource.IsLastBarkReinforced;
         wave.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         Configure();
         wave.Play(false);
@@ -47,8 +51,8 @@ public sealed class BarkWaveVfx : MonoBehaviour
                 position = mouth.position + radial * initialRadius,
                 velocity = mouth.forward * travelSpeed + radial * expansionSpeed,
                 startLifetime = duration,
-                startSize = particleSize,
-                startColor = color
+                startSize = particleSize * (reinforced ? reinforcedSizeMultiplier : 1f),
+                startColor = reinforced ? reinforcedColor : color
             };
             wave.Emit(particle, 1);
         }

@@ -685,7 +685,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   barkAudio: {fileID: 400004219}
-  minimumInterval: 0.45
+  minimumInterval: 0.25
+  barkOrigin: {fileID: 1779736043}
+  combinationWindow: 1.1
+  normalInterference: 0.2
+  reinforcedInterference: 0.4
   onBarked:
     m_PersistentCalls:
       m_Calls:
@@ -5050,6 +5054,8 @@ MonoBehaviour:
   audioSource: {fileID: 400004220}
   variants:
   - {fileID: 8300000, guid: 3186ac3e169186b488155eeaf19fef77, type: 3}
+  reinforcedVolumeMultiplier: 1.15
+  reinforcedPitchMultiplier: 0.9
 --- !u!82 &400004220
 AudioSource:
   m_ObjectHideFlags: 0
@@ -22940,6 +22946,9 @@ MonoBehaviour:
   expansionSpeed: 0.8
   travelSpeed: 1.2
   color: {r: 0.3, g: 0.9, b: 1, a: 0.9}
+  barkSource: {fileID: 75761121}
+  reinforcedColor: {r: 1, g: 0.6, b: 0.12, a: 0.95}
+  reinforcedSizeMultiplier: 1.3
 --- !u!199 &1863992557
 ParticleSystemRenderer:
   serializedVersion: 6
