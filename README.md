@@ -19,3 +19,5 @@ Organización de originales, pruebas y audios en uso: [Docs/ORDEN_AUDIO.md](Docs
 Segunda integración de audio: [informe para Audio Interactivo](Docs/PAWS_BEYOND_P2_AUDIO_INFORME.md).
 
 Fase 1: estabilización del baño, ladridos con B/cuadrado del mando y ondas nativas. Cambios, pruebas y validación manual pendiente: [registro de Fase 1](Docs/P2_FASE_1.md).
+
+Fase 2 y base de episodios: [parámetros, cambios y pasada manual pendiente](Docs/P2_FASE_2.md).
