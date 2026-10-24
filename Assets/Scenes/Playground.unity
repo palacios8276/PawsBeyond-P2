@@ -11564,8 +11564,8 @@ HingeJoint:
   m_ConnectedAnchor: {x: 0, y: 0, z: 0}
   m_UseSpring: 1
   m_Spring:
-    spring: 40
-    damper: 12
+    spring: 60
+    damper: 14
     targetPosition: 0
   m_UseMotor: 0
   m_Motor:
@@ -28632,6 +28632,7 @@ MonoBehaviour:
   doorHinge: {fileID: 913234708}
   openTarget: -95
   closedTarget: 0
+  closingDelay: 0.6
 --- !u!65 &1891023075
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -28651,7 +28652,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 5.4, y: 2.6, z: 3}
+  m_Size: {x: 7.6, y: 2.6, z: 3}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &1891023076
 Rigidbody:
@@ -29813,8 +29814,8 @@ HingeJoint:
   m_ConnectedAnchor: {x: 0, y: 0, z: 0}
   m_UseSpring: 1
   m_Spring:
-    spring: 40
-    damper: 12
+    spring: 60
+    damper: 14
     targetPosition: 0
   m_UseMotor: 0
   m_Motor:
@@ -31598,7 +31599,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.4, y: 2.6, z: 3}
+  m_Size: {x: 7.6, y: 2.6, z: 3}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &2132809715
 MonoBehaviour:
@@ -31615,6 +31616,7 @@ MonoBehaviour:
   doorHinge: {fileID: 2008956184}
   openTarget: -95
   closedTarget: 0
+  closingDelay: 0.6
 --- !u!54 &2132809716
 Rigidbody:
   m_ObjectHideFlags: 0

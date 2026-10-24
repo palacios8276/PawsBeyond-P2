@@ -6,6 +6,8 @@ public class DoorTriggerDetector : MonoBehaviour
     [SerializeField] private HingeJoint doorHinge;
     [SerializeField] private float openTarget = 90f;
     [SerializeField] private float closedTarget = 0f;
+    [SerializeField, Min(0f)] private float closingDelay = 0.6f;
+    private float closeAfter;
     private readonly HashSet<Collider> occupants = new HashSet<Collider>();
     private bool closingForPuzzle;
     private bool narrativePresence;
@@ -16,13 +18,14 @@ public class DoorTriggerDetector : MonoBehaviour
     public void SetNarrativePresence(bool present)
     {
         if (narrativePresence == present) return;
+        if (!present && occupants.Count == 0) closeAfter = Time.time + closingDelay;
         narrativePresence = present;
         RefreshTarget();
     }
 
     private void RefreshTarget()
     {
-        SetTarget(closingForPuzzle || (occupants.Count == 0 && !narrativePresence)
+        SetTarget(closingForPuzzle || (occupants.Count == 0 && !narrativePresence && Time.time >= closeAfter)
             ? closedTarget : openTarget);
     }
 
@@ -33,6 +36,7 @@ public class DoorTriggerDetector : MonoBehaviour
             doorHinge.GetComponent<Rigidbody>().constraints = unlockedConstraints;
             IsPuzzleLocked = false;
         }
+        if (closing) closeAfter = 0f;
         closingForPuzzle = closing;
         RefreshTarget();
     }
@@ -71,15 +75,26 @@ public class DoorTriggerDetector : MonoBehaviour
         doorHinge.GetComponent<Rigidbody>().WakeUp();
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void Update()
+    {
+        if (closeAfter <= 0f || Time.time < closeAfter) return;
+        closeAfter = 0f;
+        RefreshTarget();
+    }
+
+    private void OnTriggerEnter(Collider other) => TrackPlayer(other);
+    private void OnTriggerStay(Collider other) => TrackPlayer(other);
+
+    private void TrackPlayer(Collider other)
     {
         if (!other.GetComponentInParent<CharacterController>() || !other.transform.root.CompareTag("Player")) return;
-        occupants.Add(other);
-        RefreshTarget();
+        if (occupants.Add(other)) { closeAfter = 0f; RefreshTarget(); }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        if (occupants.Remove(other)) RefreshTarget();
+        if (!occupants.Remove(other)) return;
+        if (occupants.Count == 0) closeAfter = Time.time + closingDelay;
+        RefreshTarget();
     }
 }
