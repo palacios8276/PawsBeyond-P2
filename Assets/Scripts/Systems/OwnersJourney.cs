@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.Events;
 
+[System.Serializable] public sealed class JourneyWaypointEvent : UnityEvent<int> { }
+
 public class OwnersJourney : MonoBehaviour
 {
     [SerializeField] private Transform[] waypoints;
@@ -21,6 +23,9 @@ public class OwnersJourney : MonoBehaviour
     [SerializeField] private UnityEvent onJourneyStarted = new UnityEvent();
     [SerializeField] private bool automaticStart = true;
     [SerializeField, Min(0.1f)] private float maximumStartWait = 3f;
+    [SerializeField] private JourneyWaypointEvent onWaypointReached = new JourneyWaypointEvent();
+    private bool narrativeHeld;
+    public void SetNarrativeHold(bool held) => narrativeHeld = held;
     private bool playerVisited;
     private float startWait;
     private bool playerPresent;
@@ -79,7 +84,7 @@ public class OwnersJourney : MonoBehaviour
             BeginJourney();
         }
         if (delay > 0f) { delay -= Time.deltaTime; return; }
-        if (IsComplete) return;
+        if (IsComplete || narrativeHeld) return;
         if (next > bedroomCrossing) bedroomTrigger.SetNarrativePresence(false);
         if (next == bedroomCrossing)
         {
@@ -103,6 +108,7 @@ public class OwnersJourney : MonoBehaviour
             bathroomPuzzle.NotifyOwnersArrived();
             if (!bathroomPuzzle.IsSolved) return;
         }
+        onWaypointReached.Invoke(next);
         next++;
     }
 

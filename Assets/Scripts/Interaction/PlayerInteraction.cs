@@ -1,5 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Events;
+using System;
+[Serializable] public sealed class DragObjectEvent : UnityEvent<BasketDrag> { }
 
 public class PlayerInteraction : MonoBehaviour
 {
@@ -7,6 +10,10 @@ public class PlayerInteraction : MonoBehaviour
     [SerializeField] private Transform interactionOrigin;
     private PlayerInputActions inputActions;
     private BasketDrag heldBasket;
+    [SerializeField] private DragObjectEvent onObjectGrabbed = new DragObjectEvent();
+    [SerializeField] private DragObjectEvent onObjectReleased = new DragObjectEvent();
+    public DragObjectEvent OnObjectGrabbed => onObjectGrabbed;
+    public DragObjectEvent OnObjectReleased => onObjectReleased;
     public bool IsDragging => heldBasket && heldBasket.IsHeld;
 
     private void Awake() => inputActions = new PlayerInputActions();
@@ -32,8 +39,10 @@ public class PlayerInteraction : MonoBehaviour
     {
         if (IsDragging)
         {
+            var released = heldBasket;
             heldBasket.Release();
             heldBasket = null;
+            onObjectReleased.Invoke(released);
             return;
         }
         if (!interactionOrigin) return;
@@ -41,9 +50,12 @@ public class PlayerInteraction : MonoBehaviour
             out RaycastHit hit, interactionDistance, ~0, QueryTriggerInteraction.Ignore))
         {
             var basket = hit.collider.GetComponentInParent<BasketDrag>();
-            if (basket && basket.Grab(transform)) heldBasket = basket;
+            if (basket && basket.Grab(transform))
+            {
+                heldBasket = basket;
+                onObjectGrabbed.Invoke(basket);
+            }
         }
     }
 
 }
-
