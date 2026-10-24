@@ -95,3 +95,11 @@ Se preservan fuera de los commits NewAudioMixer.mixer/.meta y dos ajustes de aud
 - Validar claridad de ventanas, colliders y cámara, especialmente el panel de vidrio opaco y el corredor detrás del sofá. Posiciones configuradas según geometría real, pendientes de aceptación jugable.
 - Afinar ritmo y mezcla con escucha manual; una sola secuencia de sala, sin dependencia de que la interferencia permanezca alta después del evento.
 - Recién después de esta regresión: planificar la siguiente fase con reglas del baño evolucionado/cocina, sin implementarlas aquí. Mantener el cierre del dormitorio persistente y la futura progresión separada del rayo.
+
+## Ajuste posterior de mobiliario gris
+
+A pedido del usuario: inodoro girado 90° hacia el centro del baño, con mochila próxima a pared este y asiento greybox; se agrupan sus piezas conservando objetos y referencias existentes. Lavamanos desplazado 0,5 m hacia su pared y bañera 0,65 m hacia el muro sur. Cocina: mesa gris y dos sillas cerca del acceso, fuera del eje de circulación x=5,3 y sin tapar las ventanas. Se reutilizan materiales grises existentes, sin texturas, mecánicas ni puzzles nuevos.
+
+Archivos: Playground.unity y Tools/P2GreyboxFurnitureSetup.cs (autoría, con guardia contra duplicaciones). La configuración compiló y se ejecutó correctamente en el Editor; comprobación de bounds: ningún solape de los sanitarios ajustados con muros del baño. Console mantiene 0 errores. Sin Play: paso con Player/cámara, lectura de muebles y comodidad del espacio pendientes de la pasada manual. Se preservan fuera del commit los ajustes previos de audio y NewAudioMixer.
+
+Commit: Ajusta el baño y completa el mobiliario gris de cocina.
