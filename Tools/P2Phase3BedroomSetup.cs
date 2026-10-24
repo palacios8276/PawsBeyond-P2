@@ -21,7 +21,6 @@ public static class P2Phase3BedroomSetup
         var so=new SerializedObject(target); so.FindProperty(name).floatValue=value; so.ApplyModifiedPropertiesWithoutUndo();
     }
     static T Event<T>(UnityEngine.Object target,string name) where T:class =>
-        typeof(T).IsAssignableFrom(target.GetType()) ? null :
         target.GetType().GetField(name,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(target) as T;
     static GameObject Cube(string name, Transform parent, Vector3 position, Vector3 size, Material material)
     {
@@ -126,3 +125,4 @@ public static class P2Phase3BedroomSetup
         return "Dormitorio configurado: tres juguetes/prefab, silla y persiana física, ayudas TMP, dueños horizontales y comienzo por tutorial. Sin Play.";
     }
 }
+
