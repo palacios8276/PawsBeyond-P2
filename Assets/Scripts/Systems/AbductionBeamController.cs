@@ -39,6 +39,15 @@ public sealed class AbductionBeamController : MonoBehaviour
     [Header("Eventos, sin redirección narrativa")]
     [SerializeField] private BeamStateChangedEvent onStateChanged = new BeamStateChangedEvent();
     [SerializeField] private UnityEvent onUncontrolled = new UnityEvent();
+    [SerializeField] private bool beamActive = true;
+    public bool IsBeamActive => isActiveAndEnabled && beamActive;
+    public void SetBeamActive(bool active)
+    {
+        beamActive = active;
+        if (beamRenderer) beamRenderer.enabled = active;
+        if (beamLight) beamLight.enabled = active;
+        if (beamAudio) { if (active && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play(); else if (!active) beamAudio.Stop(); }
+    }
     private int lastConsumedBark = -1;
     private float lastBarkTime = float.NegativeInfinity;
     private Color displayedColor;
@@ -59,13 +68,15 @@ public sealed class AbductionBeamController : MonoBehaviour
         if (beamAudio)
         {
             originalVolume = beamAudio.volume; originalPitch = beamAudio.pitch;
-            if (beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play();
+            if (beamActive && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play();
         }
     }
 
+    private void Start() => SetBeamActive(beamActive);
+
     public void OnBark()
     {
-        if (!isActiveAndEnabled || !barkSource || barkSource.BarkCount == lastConsumedBark) return;
+        if (!IsBeamActive || !barkSource || barkSource.BarkCount == lastConsumedBark) return;
         lastConsumedBark = barkSource.BarkCount;
         Transform origin = barkSource.Origin;
         Vector3 target = beamRenderer ? beamRenderer.bounds.ClosestPoint(origin.position) : transform.position;
@@ -82,6 +93,7 @@ public sealed class AbductionBeamController : MonoBehaviour
 
     private void Update()
     {
+        if (!beamActive) return;
         if (Time.time - lastBarkTime >= recoveryDelay)
             interference = Mathf.MoveTowards(interference, 0f, recoveryPerSecond * Time.deltaTime);
         RefreshState();
@@ -100,6 +112,7 @@ public sealed class AbductionBeamController : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (!beamActive) return;
         Color target = currentState == AbductionBeamState.Uncontrolled ? uncontrolledColor
             : currentState == AbductionBeamState.IntenseInterference ? intenseColor
             : currentState == AbductionBeamState.Affected ? affectedColor : stableColor;

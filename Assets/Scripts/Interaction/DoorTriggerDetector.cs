@@ -10,22 +10,25 @@ public class DoorTriggerDetector : MonoBehaviour
     private float closeAfter;
     private readonly HashSet<Collider> occupants = new HashSet<Collider>();
     private bool closingForPuzzle;
-    private bool narrativePresence;
+    private bool narrativeOpeningRequested;
+    [SerializeField] private CharacterController allowedPlayer;
     private RigidbodyConstraints unlockedConstraints;
     private float lastTarget = float.NaN;
     public bool IsPuzzleLocked { get; private set; }
 
-    public void SetNarrativePresence(bool present)
+    // Solicitud explícita del recorrido; nunca se activa por colliders de otros actores.
+    public void RequestNarrativeOpening(bool requested)
     {
-        if (narrativePresence == present) return;
-        if (!present && occupants.Count == 0) closeAfter = Time.time + closingDelay;
-        narrativePresence = present;
+        if (narrativeOpeningRequested == requested) return;
+        narrativeOpeningRequested = requested;
+        if (requested) closeAfter = 0f;
+        else if (occupants.Count == 0) closeAfter = Time.time + closingDelay;
         RefreshTarget();
     }
 
     private void RefreshTarget()
     {
-        SetTarget(closingForPuzzle || (occupants.Count == 0 && !narrativePresence && Time.time >= closeAfter)
+        SetTarget(closingForPuzzle || IsPuzzleLocked || (occupants.Count == 0 && !narrativeOpeningRequested && Time.time >= closeAfter)
             ? closedTarget : openTarget);
     }
 
@@ -87,7 +90,7 @@ public class DoorTriggerDetector : MonoBehaviour
 
     private void TrackPlayer(Collider other)
     {
-        if (!other.GetComponentInParent<CharacterController>() || !other.transform.root.CompareTag("Player")) return;
+        if (!allowedPlayer || other != allowedPlayer) return;
         if (occupants.Add(other)) { closeAfter = 0f; RefreshTarget(); }
     }
 
