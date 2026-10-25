@@ -4314,8 +4314,8 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 0
-  MinDistance: 4
-  MaxDistance: 42
+  MinDistance: 6
+  MaxDistance: 45
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -4350,7 +4350,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.85
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -14805,10 +14805,34 @@ MonoBehaviour:
   highlightColor: {r: 1, g: 0.8, b: 0.15, a: 1}
   onAbductionStarted:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1399984916}
+        m_TargetAssemblyTypeName: WindowAmbienceFocus, Assembly-CSharp
+        m_MethodName: BeginBedroomAbduction
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onBedroomCompleted:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1399984916}
+        m_TargetAssemblyTypeName: WindowAmbienceFocus, Assembly-CSharp
+        m_MethodName: EndBedroomAbduction
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   step: 0
 --- !u!4 &873317477
 Transform:
@@ -14832,6 +14856,7 @@ Transform:
   - {fileID: 1433353816}
   - {fileID: 656687302}
   - {fileID: 1526147056}
+  - {fileID: 896872395}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &879644368
@@ -15215,6 +15240,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 880361443}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &896872394
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 896872395}
+  m_Layer: 0
+  m_Name: BedroomWindow_ExteriorAudio
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &896872395
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 896872394}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -17.57, y: 1.5, z: 4.4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 873317477}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &903558377
 GameObject:
   m_ObjectHideFlags: 0
@@ -20055,7 +20111,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.25
+      value: 0
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -21655,7 +21711,11 @@ MonoBehaviour:
   functionalExterior: {fileID: 1937371498}
   blockedExterior: {fileID: 1545461020}
   neutralExterior: {fileID: 626531398}
+  bedroomExterior: {fileID: 896872395}
   transitionSeconds: 1.2
+  contextFadeSeconds: 0.6
+  bedroomNatureGain: 0.9
+  bedroomShipGain: 2.2
   focusedNatureGain: 0.8
   focusedShipGain: 2.4
   shiftedNatureGain: 0.65
