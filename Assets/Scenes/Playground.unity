@@ -20601,6 +20601,9 @@ MonoBehaviour:
   onRedirected:
     m_PersistentCalls:
       m_Calls: []
+  onWindowFocusShifted:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &1399984915
 Transform:
   m_ObjectHideFlags: 0
@@ -22002,6 +22005,10 @@ PrefabInstance:
     - target: {fileID: 4609461796478676953, guid: 9a45162bbfb82a64b9cdd0684dcc5a8d, type: 3}
       propertyPath: m_IsKinematic
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5051160548189683284, guid: 9a45162bbfb82a64b9cdd0684dcc5a8d, type: 3}
+      propertyPath: keepInBedroom
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6661629667700430383, guid: 9a45162bbfb82a64b9cdd0684dcc5a8d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -34228,6 +34235,7 @@ MonoBehaviour:
   openTarget: -95
   closedTarget: 0
   closingDelay: 0.6
+  allowedPlayer: {fileID: 75761113}
 --- !u!65 &1891023075
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -37932,6 +37940,7 @@ MonoBehaviour:
   openTarget: -95
   closedTarget: 0
   closingDelay: 0.6
+  allowedPlayer: {fileID: 75761113}
 --- !u!54 &2132809716
 Rigidbody:
   m_ObjectHideFlags: 0

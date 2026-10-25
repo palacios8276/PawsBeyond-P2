@@ -10,22 +10,14 @@ public class DoorTriggerDetector : MonoBehaviour
     private float closeAfter;
     private readonly HashSet<Collider> occupants = new HashSet<Collider>();
     private bool closingForPuzzle;
-    private bool narrativePresence;
+    [SerializeField] private CharacterController allowedPlayer;
     private RigidbodyConstraints unlockedConstraints;
     private float lastTarget = float.NaN;
     public bool IsPuzzleLocked { get; private set; }
 
-    public void SetNarrativePresence(bool present)
-    {
-        if (narrativePresence == present) return;
-        if (!present && occupants.Count == 0) closeAfter = Time.time + closingDelay;
-        narrativePresence = present;
-        RefreshTarget();
-    }
-
     private void RefreshTarget()
     {
-        SetTarget(closingForPuzzle || (occupants.Count == 0 && !narrativePresence && Time.time >= closeAfter)
+        SetTarget(closingForPuzzle || (occupants.Count == 0 && Time.time >= closeAfter)
             ? closedTarget : openTarget);
     }
 
@@ -87,7 +79,7 @@ public class DoorTriggerDetector : MonoBehaviour
 
     private void TrackPlayer(Collider other)
     {
-        if (!other.GetComponentInParent<CharacterController>() || !other.transform.root.CompareTag("Player")) return;
+        if (!allowedPlayer || other != allowedPlayer) return;
         if (occupants.Add(other)) { closeAfter = 0f; RefreshTarget(); }
     }
 

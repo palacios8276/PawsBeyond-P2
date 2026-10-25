@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1085589772968526555}
   - component: {fileID: 4609461796478676953}
   - component: {fileID: 8147243745762707238}
+  - component: {fileID: 5051160548189683284}
   m_Layer: 0
   m_Name: BedroomToy
   m_TagString: Untagged
@@ -51,7 +52,7 @@ SphereCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4113406225176701109}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: fdbe719d1b6192443ac11d15a393528e, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -118,9 +119,9 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4113406225176701109}
   serializedVersion: 4
-  m_Mass: 0.15
-  m_Drag: 1
-  m_AngularDrag: 1
+  m_Mass: 0.8
+  m_Drag: 3
+  m_AngularDrag: 3
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -149,7 +150,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d95a8c46df75bfa4dafe5b073000f86b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  followStrength: 12
-  maxSpeed: 7
+  followStrength: 8
+  maxSpeed: 6
   breakDistance: 4
   carryHeight: 0.55
+--- !u!114 &5051160548189683284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4113406225176701109}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4604ce3cdae725141b12f894541d5fe4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pushImpulseScale: 0.035
+  pushInterval: 0.12
+  looseHorizontalSpeed: 1.8
+  keepInBedroom: 1
+  roomCenter: {x: -18.03, y: 0, z: -0.05}
+  roomHalfSize: {x: 5.65, y: 3.5}
+  edgeSoftness: 0.5
+  edgeAcceleration: 4
+  lostDistance: 2
+  lostDelay: 1

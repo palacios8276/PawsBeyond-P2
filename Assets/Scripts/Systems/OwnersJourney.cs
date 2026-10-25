@@ -85,22 +85,17 @@ public class OwnersJourney : MonoBehaviour
         }
         if (delay > 0f) { delay -= Time.deltaTime; return; }
         if (IsComplete || narrativeHeld) return;
-        if (next > bedroomCrossing) bedroomTrigger.SetNarrativePresence(false);
         if (next == bedroomCrossing)
         {
-            bedroomTrigger.SetNarrativePresence(true);
             if (Mathf.Abs(bedroomDoor.angle) < 75f) return;
         }
-        if (next > bathroomCrossing && next < bathroomExit) bathroomTrigger.SetNarrativePresence(false);
         if (next == bathroomCrossing || next == bathroomExit)
         {
             // If the player arrived early, wait outside instead of crossing a blocked door.
             if (next == bathroomCrossing && bathroomPuzzle.IsActivated && !bathroomPuzzle.IsSolved)
-            { bathroomTrigger.SetNarrativePresence(false); return; }
-            bathroomTrigger.SetNarrativePresence(true);
+                return;
             if (Mathf.Abs(bathroomDoor.angle) < 75f) return;
         }
-        if (next > bathroomExit) bathroomTrigger.SetNarrativePresence(false);
         transform.position = Vector3.MoveTowards(transform.position, waypoints[next].position, moveSpeed * Time.deltaTime);
         if (Vector3.Distance(transform.position, waypoints[next].position) > 0.01f) return;
         if (next == bathroomStop)
@@ -116,11 +111,5 @@ public class OwnersJourney : MonoBehaviour
     public void ResumeAfterBathroom()
     {
         if (bathroomPuzzle.IsSolved && next == bathroomStop) next++;
-    }
-
-    private void OnDisable()
-    {
-        if (bedroomTrigger) bedroomTrigger.SetNarrativePresence(false);
-        if (bathroomTrigger) bathroomTrigger.SetNarrativePresence(false);
     }
 }

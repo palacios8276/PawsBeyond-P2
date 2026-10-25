@@ -29,6 +29,12 @@ public class CharacterControllerPush : MonoBehaviour
 
         pushDirection.Normalize();
 
+        if (body.TryGetComponent<BedroomToyPhysics>(out var toy))
+        {
+            toy.ApplyPlayerPush(pushDirection, hit.point, pushPower);
+            return;
+        }
+
         // Aplicamos la fuerza en el punto exacto de contacto.
         // Esto permite generar torque sobre objetos con bisagra.
         body.AddForceAtPosition(
