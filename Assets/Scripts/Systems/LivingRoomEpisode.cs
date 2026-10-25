@@ -13,6 +13,7 @@ public sealed class LivingRoomEpisode : MonoBehaviour
     [SerializeField, Min(0.1f)] private float blockedAttemptSeconds = 1.5f;
     [SerializeField] private UnityEvent onWindowAttempt = new UnityEvent();
     [SerializeField] private UnityEvent onRedirected = new UnityEvent();
+    [SerializeField] private UnityEvent onWindowFocusShifted = new UnityEvent();
     private bool attempted, waitingForBarks, redirected, atBlockedWindow, completed;
     private float blockedUntil;
 
@@ -45,6 +46,10 @@ public sealed class LivingRoomEpisode : MonoBehaviour
         if (!waitingForBarks || redirected || completed || !beam.IsBeamActive ||
             progression.CurrentEpisode != NarrativeEpisode.LivingRoom) return;
         redirected = true; waitingForBarks = false;
+        if (functionalWindowLight) functionalWindowLight.enabled = false;
+        if (blockedWindowLight) blockedWindowLight.enabled = true;
+        if (alienSilhouette) alienSilhouette.SetActive(false);
+        onWindowFocusShifted.Invoke();
         journey.SetNarrativeHold(false);
     }
 
