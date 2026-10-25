@@ -4314,8 +4314,8 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 0
-  MinDistance: 2
-  MaxDistance: 18
+  MinDistance: 4
+  MaxDistance: 42
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -4350,7 +4350,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1
+      value: 0.85
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -4365,7 +4365,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 0.125
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12846,15 +12846,15 @@ AudioSource:
   m_Resource: {fileID: 8300000, guid: b108de0650ec3ef4fa8fa1a51eb144c5, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 0.09
-  m_Pitch: 0.65
+  m_Pitch: 0.55
   Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 0
-  MinDistance: 4
-  MaxDistance: 32
+  MinDistance: 8
+  MaxDistance: 50
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -12889,7 +12889,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1
+      value: 0.95
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12904,7 +12904,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 0.22222222
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -12944,7 +12944,7 @@ AudioLowPassFilter:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.040472943
+      value: 0.029104138
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -20019,8 +20019,8 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 0
-  MinDistance: 1.000001
-  MaxDistance: 20
+  MinDistance: 6
+  MaxDistance: 50
   Pan2D: 0
   rolloffMode: 1
   BypassEffects: 0
@@ -20055,7 +20055,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 1
+      value: 0.25
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -20070,7 +20070,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 0.33333334
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -21655,10 +21655,12 @@ MonoBehaviour:
   functionalExterior: {fileID: 1937371498}
   blockedExterior: {fileID: 1545461020}
   neutralExterior: {fileID: 626531398}
-  transitionSeconds: 0.8
-  focusedNatureGain: 0.4
+  transitionSeconds: 1.2
+  focusedNatureGain: 0.8
   focusedShipGain: 2.4
-  activeBeamShipGain: 1.3
+  shiftedNatureGain: 0.65
+  shiftedShipGain: 3.4
+  activeBeamShipGain: 1
   shipOffset: {x: 0, y: 3, z: 5}
 --- !u!1 &1410137486
 GameObject:
