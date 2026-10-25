@@ -85,6 +85,9 @@ public class OwnersJourney : MonoBehaviour
         }
         if (delay > 0f) { delay -= Time.deltaTime; return; }
         if (IsComplete || narrativeHeld) return;
+        bedroomTrigger.RequestNarrativeOpening(next == bedroomCrossing);
+        bool bathroomBlocked = next == bathroomCrossing && bathroomPuzzle.IsActivated && !bathroomPuzzle.IsSolved;
+        bathroomTrigger.RequestNarrativeOpening((next == bathroomCrossing || next == bathroomExit) && !bathroomBlocked);
         if (next == bedroomCrossing)
         {
             if (Mathf.Abs(bedroomDoor.angle) < 75f) return;
@@ -92,7 +95,7 @@ public class OwnersJourney : MonoBehaviour
         if (next == bathroomCrossing || next == bathroomExit)
         {
             // If the player arrived early, wait outside instead of crossing a blocked door.
-            if (next == bathroomCrossing && bathroomPuzzle.IsActivated && !bathroomPuzzle.IsSolved)
+            if (bathroomBlocked)
                 return;
             if (Mathf.Abs(bathroomDoor.angle) < 75f) return;
         }
@@ -111,5 +114,10 @@ public class OwnersJourney : MonoBehaviour
     public void ResumeAfterBathroom()
     {
         if (bathroomPuzzle.IsSolved && next == bathroomStop) next++;
+    }
+    private void OnDisable()
+    {
+        if (bedroomTrigger) bedroomTrigger.RequestNarrativeOpening(false);
+        if (bathroomTrigger) bathroomTrigger.RequestNarrativeOpening(false);
     }
 }

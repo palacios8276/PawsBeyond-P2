@@ -10,14 +10,25 @@ public class DoorTriggerDetector : MonoBehaviour
     private float closeAfter;
     private readonly HashSet<Collider> occupants = new HashSet<Collider>();
     private bool closingForPuzzle;
+    private bool narrativeOpeningRequested;
     [SerializeField] private CharacterController allowedPlayer;
     private RigidbodyConstraints unlockedConstraints;
     private float lastTarget = float.NaN;
     public bool IsPuzzleLocked { get; private set; }
 
+    // Solicitud explícita del recorrido; nunca se activa por colliders de otros actores.
+    public void RequestNarrativeOpening(bool requested)
+    {
+        if (narrativeOpeningRequested == requested) return;
+        narrativeOpeningRequested = requested;
+        if (requested) closeAfter = 0f;
+        else if (occupants.Count == 0) closeAfter = Time.time + closingDelay;
+        RefreshTarget();
+    }
+
     private void RefreshTarget()
     {
-        SetTarget(closingForPuzzle || (occupants.Count == 0 && Time.time >= closeAfter)
+        SetTarget(closingForPuzzle || IsPuzzleLocked || (occupants.Count == 0 && !narrativeOpeningRequested && Time.time >= closeAfter)
             ? closedTarget : openTarget);
     }
 
