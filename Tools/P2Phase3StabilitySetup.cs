@@ -24,7 +24,7 @@ public static class P2Phase3StabilitySetup
         try
         {
             var body=root.GetComponent<Rigidbody>();body.mass=0.8f;body.linearDamping=3f;body.angularDamping=3f;
-            body.maxLinearVelocity=6.5f;body.maxAngularVelocity=5f;
+
             root.GetComponent<Collider>().sharedMaterial=friction;
             if(!root.GetComponent<BedroomToyPhysics>())root.AddComponent<BedroomToyPhysics>();
             var so=new SerializedObject(root.GetComponent<BasketDrag>());so.FindProperty("followStrength").floatValue=8f;so.FindProperty("maxSpeed").floatValue=6f;so.ApplyModifiedPropertiesWithoutUndo();
@@ -39,4 +39,5 @@ public static class P2Phase3StabilitySetup
         return "Puertas vinculadas solo al CharacterController del Player y ajustes específicos del prefab de juguetes. Sin Play.";
     }
 }
+
 

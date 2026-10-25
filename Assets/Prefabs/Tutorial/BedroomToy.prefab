@@ -169,6 +169,8 @@ MonoBehaviour:
   pushImpulseScale: 0.035
   pushInterval: 0.12
   looseHorizontalSpeed: 1.8
+  maximumBodySpeed: 6.5
+  maximumSpin: 5
   keepInBedroom: 1
   roomCenter: {x: -18.03, y: 0, z: -0.05}
   roomHalfSize: {x: 5.65, y: 3.5}

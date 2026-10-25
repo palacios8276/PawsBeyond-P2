@@ -7,6 +7,8 @@ public sealed class BedroomToyPhysics : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float pushImpulseScale = 0.035f;
     [SerializeField, Min(0.01f)] private float pushInterval = 0.12f;
     [SerializeField, Min(0.1f)] private float looseHorizontalSpeed = 1.8f;
+    [SerializeField, Min(0.1f)] private float maximumBodySpeed = 6.5f;
+    [SerializeField, Min(0.1f)] private float maximumSpin = 5f;
     [Header("Solo juguetes de práctica, sin barreras")]
     [SerializeField] private bool keepInBedroom = true;
     [SerializeField] private Vector3 roomCenter = new Vector3(-18.03f, 0f, -0.05f);
@@ -23,7 +25,16 @@ public sealed class BedroomToyPhysics : MonoBehaviour
     private void Awake()
     {
         body = GetComponent<Rigidbody>(); drag = GetComponent<BasketDrag>(); home = body.position;
+        ApplyBodyLimits();
     }
+
+    private void ApplyBodyLimits()
+    {
+        var target = GetComponent<Rigidbody>();
+        target.maxLinearVelocity = maximumBodySpeed; target.maxAngularVelocity = maximumSpin;
+    }
+
+    private void OnValidate() => ApplyBodyLimits();
 
     public void ApplyPlayerPush(Vector3 direction, Vector3 point, float power)
     {
