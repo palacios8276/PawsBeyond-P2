@@ -976,18 +976,20 @@ MonoBehaviour:
   exteriorBeam: {fileID: 146708408}
   interiorBeam: {fileID: 1084675460}
   ownerTargetOffset: {x: 0, y: 0.1, z: 0}
+  projectionTargetOffset: {x: 0, y: -0.7, z: 0}
   exteriorWidth: 0.55
-  interiorWidth: 0.7
+  interiorWidth: 1.15
+  interiorPresence: 1.2
   fadeSeconds: 0.45
   floatAmplitude: 0.065
   floatSpeed: 0.65
   interferenceMotion: 0.1
   maximumTilt: 2
-  ownerGlowIntensity: 2.2
-  windowIntensity: 2.6
+  ownerGlowIntensity: 6
+  windowIntensity: 5
   shipLightIntensity: 1.5
   barkFeedbackSeconds: 0.45
-  barkFeedbackGain: 0.25
+  barkFeedbackGain: 0.45
   styles:
   - color: {r: 0.2, g: 0.85, b: 1, a: 0.45}
     pulseHz: 0.45
@@ -996,27 +998,39 @@ MonoBehaviour:
     pitch: 1
     cutoff: 6500
     texture: {fileID: 2800000, guid: 20d36c8b34b62154a8d7ab65f5f660d7, type: 3}
-  - color: {r: 0.25, g: 1, b: 0.8, a: 0.5}
+    pulseDepth: 0.06
+    widthVariation: 0.02
+    lateralWobble: 0
+  - color: {r: 0.25, g: 1, b: 0.55, a: 0.5}
     pulseHz: 0.8
     irregularity: 0.14
     audioGain: 0.95
     pitch: 1.06
     cutoff: 4200
     texture: {fileID: 2800000, guid: 888924576aa2b9449958a352f55a1e8b, type: 3}
-  - color: {r: 0.15, g: 0.95, b: 0.9, a: 0.55}
+    pulseDepth: 0.32
+    widthVariation: 0.12
+    lateralWobble: 0.035
+  - color: {r: 1, g: 0.58, b: 0.12, a: 0.55}
     pulseHz: 1.25
     irregularity: 0.36
     audioGain: 1.05
     pitch: 1.15
     cutoff: 2800
     texture: {fileID: 2800000, guid: f1bad54a148f2f64994672600dd7c1a0, type: 3}
-  - color: {r: 0.35, g: 1, b: 0.7, a: 0.6}
+    pulseDepth: 0.58
+    widthVariation: 0.27
+    lateralWobble: 0.1
+  - color: {r: 0.85, g: 0.22, b: 1, a: 0.6}
     pulseHz: 1.7
     irregularity: 0.6
     audioGain: 0.95
     pitch: 1.22
     cutoff: 1800
     texture: {fileID: 2800000, guid: e863f67bd4e0210478b76f45f3d33047, type: 3}
+    pulseDepth: 0.84
+    widthVariation: 0.42
+    lateralWobble: 0.2
 --- !u!4 &48270051
 Transform:
   m_ObjectHideFlags: 0
@@ -5566,7 +5580,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 195445099}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -5584,8 +5598,8 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 0.2, g: 0.85, b: 1, a: 1}
-  m_Intensity: 2.5
-  m_Range: 3.2
+  m_Intensity: 6
+  m_Range: 4.8
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -27047,7 +27061,7 @@ LineRenderer:
       m_ColorSpace: -1
       m_NumColorKeys: 2
       m_NumAlphaKeys: 2
-    numCornerVertices: 0
+    numCornerVertices: 3
     numCapVertices: 4
     alignment: 0
     textureMode: 0
@@ -30930,8 +30944,8 @@ Light:
   serializedVersion: 11
   m_Type: 0
   m_Color: {r: 0.2, g: 0.85, b: 1, a: 1}
-  m_Intensity: 2.5
-  m_Range: 8
+  m_Intensity: 5
+  m_Range: 12
   m_SpotAngle: 65
   m_InnerSpotAngle: 38
   m_CookieSize: 10
@@ -35788,6 +35802,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1560565338}
   - component: {fileID: 1560565337}
+  - component: {fileID: 1560565339}
   m_Layer: 0
   m_Name: BedroomWindowProjection
   m_TagString: Untagged
@@ -35806,8 +35821,8 @@ Light:
   serializedVersion: 11
   m_Type: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
-  m_Range: 9
+  m_Intensity: 5
+  m_Range: 12
   m_SpotAngle: 65
   m_InnerSpotAngle: 38
   m_CookieSize: 10
@@ -35868,13 +35883,36 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1560565336}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 48270051}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1560565339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1560565336}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Version: 3
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_LightLayerMask: 1
+  m_RenderingLayers: 1
+  m_CustomShadowLayers: 0
+  m_ShadowLayerMask: 1
+  m_ShadowRenderingLayers: 1
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
 --- !u!1 &1562090715
 GameObject:
   m_ObjectHideFlags: 0
@@ -36683,6 +36721,18 @@ PrefabInstance:
     - target: {fileID: 309624340420779798, guid: 2ee3e5d7ffde4ad49afd6433acfada7e, type: 3}
       propertyPath: m_Enabled
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1545941524443699558, guid: 2ee3e5d7ffde4ad49afd6433acfada7e, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 1545941524443699558, guid: 2ee3e5d7ffde4ad49afd6433acfada7e, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 1545941524443699558, guid: 2ee3e5d7ffde4ad49afd6433acfada7e, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1.18
       objectReference: {fileID: 0}
     - target: {fileID: 1545941524443699558, guid: 2ee3e5d7ffde4ad49afd6433acfada7e, type: 3}
       propertyPath: m_LocalPosition.x
