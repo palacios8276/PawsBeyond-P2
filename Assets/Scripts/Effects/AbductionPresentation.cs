@@ -11,6 +11,9 @@ public sealed class BeamPresentationStyle
     [Range(0.5f, 1.5f)] public float pitch;
     [Range(500f, 12000f)] public float cutoff;
     public Texture2D texture;
+    [Range(0f, 0.9f)] public float pulseDepth = 0.08f;
+    [Range(0f, 0.6f)] public float widthVariation = 0.02f;
+    [Range(0f, 0.25f)] public float lateralWobble;
 
     public BeamPresentationStyle(Color color, float pulseHz, float irregularity, float audioGain, float pitch, float cutoff)
     {
@@ -40,7 +43,9 @@ public sealed class AbductionPresentation : MonoBehaviour
     [SerializeField] private Light shipLight, bedroomWindowLight;
     [SerializeField] private LineRenderer exteriorBeam, interiorBeam;
     [SerializeField] private Vector3 ownerTargetOffset = new Vector3(0f, 0.1f, 0f);
-    [SerializeField, Min(0.05f)] private float exteriorWidth = 0.55f, interiorWidth = 0.7f;
+    [SerializeField] private Vector3 projectionTargetOffset = new Vector3(0f, -0.7f, 0f);
+    [SerializeField, Min(0.05f)] private float exteriorWidth = 0.55f, interiorWidth = 1.15f;
+    [SerializeField, Range(1f, 1.5f)] private float interiorPresence = 1.2f;
     [Header("Movimiento y transiciones")]
     [SerializeField, Min(0.05f)] private float fadeSeconds = 0.45f;
     [SerializeField, Min(0f)] private float floatAmplitude = 0.065f;
@@ -48,17 +53,21 @@ public sealed class AbductionPresentation : MonoBehaviour
     [SerializeField, Range(0f, 0.3f)] private float interferenceMotion = 0.1f;
     [SerializeField, Range(0f, 5f)] private float maximumTilt = 2f;
     [Header("Iluminación y feedback")]
-    [SerializeField, Min(0f)] private float ownerGlowIntensity = 2.2f;
-    [SerializeField, Min(0f)] private float windowIntensity = 2.6f, shipLightIntensity = 1.5f;
+    [SerializeField, Min(0f)] private float ownerGlowIntensity = 6f;
+    [SerializeField, Min(0f)] private float windowIntensity = 5f, shipLightIntensity = 1.5f;
     [SerializeField, Min(0.1f)] private float barkFeedbackSeconds = 0.45f;
-    [SerializeField, Range(0f, 0.5f)] private float barkFeedbackGain = 0.25f;
+    [SerializeField, Range(0f, 0.5f)] private float barkFeedbackGain = 0.45f;
     [Header("Estados: mismo orden que AbductionBeamState")]
     [SerializeField] private BeamPresentationStyle[] styles =
     {
-        new BeamPresentationStyle(new Color(0.2f, 0.85f, 1f, 0.45f), 0.45f, 0f, 1f, 1f, 6500f),
-        new BeamPresentationStyle(new Color(0.25f, 1f, 0.8f, 0.5f), 0.8f, 0.14f, 0.95f, 1.06f, 4200f),
-        new BeamPresentationStyle(new Color(0.15f, 0.95f, 0.9f, 0.55f), 1.25f, 0.36f, 1.05f, 1.15f, 2800f),
-        new BeamPresentationStyle(new Color(0.35f, 1f, 0.7f, 0.6f), 1.7f, 0.6f, 0.95f, 1.22f, 1800f)
+        new BeamPresentationStyle(new Color(0.2f, 0.85f, 1f, 0.45f), 0.45f, 0f, 1f, 1f, 6500f)
+            { pulseDepth = 0.06f, widthVariation = 0.02f, lateralWobble = 0f },
+        new BeamPresentationStyle(new Color(0.25f, 1f, 0.55f, 0.5f), 0.8f, 0.14f, 0.95f, 1.06f, 4200f)
+            { pulseDepth = 0.32f, widthVariation = 0.12f, lateralWobble = 0.035f },
+        new BeamPresentationStyle(new Color(1f, 0.58f, 0.12f, 0.55f), 1.25f, 0.36f, 1.05f, 1.15f, 2800f)
+            { pulseDepth = 0.58f, widthVariation = 0.27f, lateralWobble = 0.1f },
+        new BeamPresentationStyle(new Color(0.85f, 0.22f, 1f, 0.6f), 1.7f, 0.6f, 0.95f, 1.22f, 1800f)
+            { pulseDepth = 0.84f, widthVariation = 0.42f, lateralWobble = 0.2f }
     };
 
     private MaterialPropertyBlock shipBlock, beamBlock;
@@ -130,7 +139,9 @@ public sealed class AbductionPresentation : MonoBehaviour
         float noise = Mathf.PerlinNoise(Time.time * 1.4f, 2.7f);
         float wave = 0.5f + 0.5f * Mathf.Sin(Time.time * style.pulseHz * Mathf.PI * 2f + noise * style.irregularity * 3f);
         float feedback = Mathf.Clamp01(1f - (Time.time - acceptedBarkAt) / Mathf.Max(0.1f, barkFeedbackSeconds));
-        float energy = Mathf.Clamp(0.88f + wave * 0.12f - noise * style.irregularity * 0.55f + feedback * barkFeedbackGain, 0.35f, 1.2f);
+        // La envolvente visual es independiente del audio y de la interferencia jugable.
+        float energy = Mathf.Clamp(1f - style.pulseDepth * (1f - wave) - noise * style.irregularity * 0.1f
+            + feedback * barkFeedbackGain, 0.18f, 1.4f);
         if (windowFocus.ShipOrigin)
         {
             float irregular = style.irregularity * interferenceMotion;
@@ -143,7 +154,7 @@ public sealed class AbductionPresentation : MonoBehaviour
         ApplyShipFade(weight, energy);
         Vector3 outward = currentWindow.forward;
         Vector3 entry = currentWindow.position;
-        DrawBeam(exteriorBeam, shipEmitter.position, entry + outward * 0.08f, exteriorWidth, weight, energy, style);
+        DrawBeam(exteriorBeam, shipEmitter.position, entry + outward * 0.08f, exteriorWidth, weight, energy, style, false, wave, feedback);
         bool open = !currentBlocked && (!currentBedroom || !bedroomShutter.IsClosed);
         Vector3 insideStart = entry - outward * 0.23f;
         Vector3 insideEnd = owners.position + ownerTargetOffset;
@@ -151,13 +162,14 @@ public sealed class AbductionPresentation : MonoBehaviour
         if (focused && open && Physics.Linecast(insideStart, insideEnd, out RaycastHit obstruction, ~0, QueryTriggerInteraction.Ignore)
             && !obstruction.transform.IsChildOf(owners) && !obstruction.collider.GetComponentInParent<CharacterController>())
             insideEnd = obstruction.point;
-        DrawBeam(interiorBeam, insideStart, insideEnd, interiorWidth, focused && open ? weight : 0f, energy, style);
+        DrawBeam(interiorBeam, insideStart, insideEnd, interiorWidth, focused && open ? weight : 0f, energy, style, true, wave, feedback);
         ownerGlow.enabled = active;
         ownerGlow.color = displayedColor; ownerGlow.intensity = ownerGlowIntensity * energy * (active ? 1f : 0f);
         bedroomWindowLight.enabled = focused && currentBedroom && open;
-        if (bedroomWindowLight.enabled) AimWindowLight(bedroomWindowLight, insideStart, insideEnd, energy * weight);
+        Vector3 projectionTarget = owners.position + projectionTargetOffset;
+        if (bedroomWindowLight.enabled) AimWindowLight(bedroomWindowLight, insideStart, projectionTarget, energy * weight);
         if (functionalWindowLight.enabled) AimWindowLight(functionalWindowLight, functionalWindow.position - functionalWindow.forward * 0.23f,
-            owners.position + ownerTargetOffset, energy * weight);
+            projectionTarget, energy * weight);
         // La ventana bloqueada conserva un resplandor local; no atraviesa el panel con un Spot.
         blockedWindowLight.color = displayedColor;
         blockedWindowLight.intensity = windowIntensity * energy * weight;
@@ -178,13 +190,26 @@ public sealed class AbductionPresentation : MonoBehaviour
         }
     }
 
-    private void DrawBeam(LineRenderer line, Vector3 from, Vector3 to, float width, float weight, float energy, BeamPresentationStyle style)
+    private void DrawBeam(LineRenderer line, Vector3 from, Vector3 to, float width, float weight, float energy,
+        BeamPresentationStyle style, bool interior, float wave, float feedback)
     {
         line.enabled = weight > 0.005f;
         if (!line.enabled) return;
-        line.SetPosition(0, from); line.SetPosition(1, to);
-        line.startWidth = width * 0.5f; line.endWidth = width * (1f + style.irregularity * 0.12f);
-        var color = displayedColor; color.a *= weight * energy;
+        int points = interior ? 4 : 2;
+        if (line.positionCount != points) line.positionCount = points;
+        line.SetPosition(0, from); line.SetPosition(points - 1, to);
+        if (interior)
+        {
+            Vector3 side = Vector3.Cross((to - from).normalized, Vector3.up).normalized;
+            float wobble = (Mathf.PerlinNoise(Time.time * 1.7f, 6.2f) * 2f - 1f) * style.lateralWobble;
+            line.SetPosition(1, Vector3.Lerp(from, to, 0.28f) + side * wobble * 0.4f);
+            line.SetPosition(2, Vector3.Lerp(from, to, 0.68f) - side * wobble);
+        }
+        // La boca de la ventana permanece estrecha; el extremo interior expresa la inestabilidad.
+        line.startWidth = interior ? 0.32f : width * 0.5f;
+        line.endWidth = interior ? width * (1f + style.widthVariation * (wave * 2f - 1f) + feedback * 0.25f) : width;
+        var color = displayedColor;
+        color.a = Mathf.Min(0.78f, color.a * weight * energy * (interior ? interiorPresence : 1f));
         line.startColor = color; line.endColor = color;
         beamBlock.Clear(); beamBlock.SetTexture("_BaseMap", style.texture);
         beamBlock.SetVector("_BaseMap_ST", new Vector4(1f, 1f, -Time.time * (0.08f + style.irregularity * 0.2f), 0f));
