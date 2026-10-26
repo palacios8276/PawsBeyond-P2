@@ -46,6 +46,11 @@ public sealed class AbductionPresentation : MonoBehaviour
     [SerializeField] private Vector3 projectionTargetOffset = new Vector3(0f, -0.7f, 0f);
     [SerializeField, Min(0.05f)] private float exteriorWidth = 0.55f, interiorWidth = 1.15f;
     [SerializeField, Range(1f, 1.5f)] private float interiorPresence = 1.2f;
+    [Header("Energía de acompañamiento, sin conexión con ventanas")]
+    [SerializeField] private LineRenderer accompanyingBeam;
+    [SerializeField] private Vector3 accompanyingOffset = new Vector3(0f, 0.2f, 0f);
+    [SerializeField, Min(0.2f)] private float accompanyingHeight = 2.2f, accompanyingWidth = 2.3f;
+    [SerializeField, Range(0f, 1f)] private float accompanyingOpacity = 0.6f;
     [Header("Movimiento y transiciones")]
     [SerializeField, Min(0.05f)] private float fadeSeconds = 0.45f;
     [SerializeField, Min(0f)] private float floatAmplitude = 0.065f;
@@ -75,6 +80,7 @@ public sealed class AbductionPresentation : MonoBehaviour
     private float originalVolume, originalPitch, originalCutoff;
     private bool originalForceRenderingOff;
     private float visibility, acceptedBarkAt = float.NegativeInfinity;
+    private float accompanyingVisibility;
     private Transform currentWindow;
     private bool currentBlocked, currentBedroom, ready;
     private Color displayedColor;
@@ -86,7 +92,7 @@ public sealed class AbductionPresentation : MonoBehaviour
     {
         if (!beam || !windowFocus || !logicalVolume || !owners || !bedroomShutter ||
             !bedroomWindow || !functionalWindow || !blockedWindow || !shipVisual || !shipEmitter ||
-            !exteriorBeam || !interiorBeam || !beamAudio || !beamFilter || !ownerGlow ||
+            !exteriorBeam || !interiorBeam || !accompanyingBeam || !beamAudio || !beamFilter || !ownerGlow ||
             !functionalWindowLight || !blockedWindowLight || !shipLight || !bedroomWindowLight ||
             styles == null || styles.Length != 4 || shipRenderers == null || shipRenderers.Length == 0)
         {
@@ -163,6 +169,12 @@ public sealed class AbductionPresentation : MonoBehaviour
             && !obstruction.transform.IsChildOf(owners) && !obstruction.collider.GetComponentInParent<CharacterController>())
             insideEnd = obstruction.point;
         DrawBeam(interiorBeam, insideStart, insideEnd, interiorWidth, focused && open ? weight : 0f, energy, style, true, wave, feedback);
+        accompanyingVisibility = Mathf.MoveTowards(accompanyingVisibility, active ? 1f : 0f,
+            Time.deltaTime / Mathf.Max(0.05f, fadeSeconds));
+        // Relevo visual complementario: acompaña también pausas y ventanas cerradas.
+        // No utiliza el fundido exterior para desaparecer durante un cambio de sector.
+        float connectedWeight = focused && open ? weight : 0f;
+        DrawAccompanyingBeam(accompanyingVisibility * (1f - connectedWeight), wave, feedback);
         ownerGlow.enabled = active;
         ownerGlow.color = displayedColor; ownerGlow.intensity = ownerGlowIntensity * energy * (active ? 1f : 0f);
         bedroomWindowLight.enabled = focused && currentBedroom && open;
@@ -223,6 +235,25 @@ public sealed class AbductionPresentation : MonoBehaviour
         light.color = displayedColor; light.intensity = windowIntensity * gain;
     }
 
+    private void DrawAccompanyingBeam(float weight, float wave, float feedback)
+    {
+        accompanyingBeam.enabled = weight > 0.005f;
+        if (!accompanyingBeam.enabled) return;
+        if (accompanyingBeam.positionCount != 5) accompanyingBeam.positionCount = 5;
+        Vector3 center = owners.position + accompanyingOffset;
+        // Volumen contenido y recto: no apunta al techo, no tira de los dueños y no zigzaguea en el baño.
+        for (int i = 0; i < 5; i++)
+            accompanyingBeam.SetPosition(i, center + Vector3.up * accompanyingHeight * (0.5f - i / 4f));
+        accompanyingBeam.widthMultiplier = accompanyingWidth * (1f + feedback * 0.08f);
+        Color color = displayedColor;
+        color.a *= weight * accompanyingOpacity * (0.92f + wave * 0.08f + feedback * 0.12f);
+        beamBlock.Clear(); beamBlock.SetColor("_BaseColor", color);
+        // Conserva una base continua entre acontecimientos, aun si el estado crítico fragmenta el enlace de ventana.
+        beamBlock.SetTexture("_BaseMap", styles[(int)AbductionBeamState.Stable].texture);
+        beamBlock.SetVector("_BaseMap_ST", new Vector4(1f, 1f, 0f, 0f));
+        accompanyingBeam.SetPropertyBlock(beamBlock);
+    }
+
     private void UpdateAudio(bool active, BeamPresentationStyle style, float wave, float noise, float feedback, float blend)
     {
         if (active && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play();
@@ -243,6 +274,7 @@ public sealed class AbductionPresentation : MonoBehaviour
         logicalVolume.forceRenderingOff = originalForceRenderingOff;
         foreach (var r in shipRenderers) { r.SetPropertyBlock(null); r.enabled = false; }
         exteriorBeam.enabled = false; interiorBeam.enabled = false;
+        accompanyingBeam.enabled = false; accompanyingBeam.SetPropertyBlock(null);
         bedroomWindowLight.enabled = false; shipLight.enabled = false;
         for (int i = 0; i < existingLights.Length; i++)
         { existingLights[i].color = originalLightColors[i]; existingLights[i].intensity = originalLightIntensities[i]; }
