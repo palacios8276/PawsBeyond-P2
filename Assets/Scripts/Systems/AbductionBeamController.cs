@@ -40,13 +40,16 @@ public sealed class AbductionBeamController : MonoBehaviour
     [SerializeField] private BeamStateChangedEvent onStateChanged = new BeamStateChangedEvent();
     [SerializeField] private UnityEvent onUncontrolled = new UnityEvent();
     [SerializeField] private bool beamActive = true;
+    [SerializeField] private bool externalPresentation;
+    [SerializeField] private UnityEvent onInterferenceAccepted = new UnityEvent();
+    public UnityEvent InterferenceAccepted => onInterferenceAccepted;
     public bool IsBeamActive => isActiveAndEnabled && beamActive;
     public void SetBeamActive(bool active)
     {
         beamActive = active;
         if (beamRenderer) beamRenderer.enabled = active;
-        if (beamLight) beamLight.enabled = active;
-        if (beamAudio) { if (active && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play(); else if (!active) beamAudio.Stop(); }
+        if (beamLight && !externalPresentation) beamLight.enabled = active;
+        if (beamAudio && !externalPresentation) { if (active && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play(); else if (!active) beamAudio.Stop(); }
     }
     private int lastConsumedBark = -1;
     private float lastBarkTime = float.NegativeInfinity;
@@ -68,7 +71,7 @@ public sealed class AbductionBeamController : MonoBehaviour
         if (beamAudio)
         {
             originalVolume = beamAudio.volume; originalPitch = beamAudio.pitch;
-            if (beamActive && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play();
+            if (!externalPresentation && beamActive && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play();
         }
     }
 
@@ -89,6 +92,7 @@ public sealed class AbductionBeamController : MonoBehaviour
         interference = Mathf.Clamp01(interference + barkSource.LastInterference);
         lastBarkTime = Time.time;
         RefreshState();
+        onInterferenceAccepted.Invoke();
     }
 
     private void Update()
@@ -113,6 +117,13 @@ public sealed class AbductionBeamController : MonoBehaviour
     private void LateUpdate()
     {
         if (!beamActive) return;
+        if (externalPresentation)
+        {
+            // Se conserva el pulso del volumen lógico utilizado por ladridos y TV.
+            float logicalOscillation = Mathf.Sin(Time.time * Mathf.Lerp(2f, 18f, interference));
+            transform.localScale = originalScale * (1f + logicalOscillation * interference * pulseAmount);
+            return;
+        }
         Color target = currentState == AbductionBeamState.Uncontrolled ? uncontrolledColor
             : currentState == AbductionBeamState.IntenseInterference ? intenseColor
             : currentState == AbductionBeamState.Affected ? affectedColor : stableColor;
@@ -143,8 +154,8 @@ public sealed class AbductionBeamController : MonoBehaviour
         if (!Application.isPlaying) return;
         transform.localScale = originalScale;
         if (beamRenderer && originalBlock != null) beamRenderer.SetPropertyBlock(originalBlock);
-        if (beamLight) { beamLight.intensity = originalLightIntensity; beamLight.color = originalLightColor; }
-        if (beamAudio) { beamAudio.Stop(); beamAudio.volume = originalVolume; beamAudio.pitch = originalPitch; }
+        if (beamLight && !externalPresentation) { beamLight.intensity = originalLightIntensity; beamLight.color = originalLightColor; }
+        if (beamAudio && !externalPresentation) { beamAudio.Stop(); beamAudio.volume = originalVolume; beamAudio.pitch = originalPitch; }
     }
 
     private void OnValidate()

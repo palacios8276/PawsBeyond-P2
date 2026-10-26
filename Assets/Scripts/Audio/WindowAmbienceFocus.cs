@@ -23,6 +23,13 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
     private bool windowActive, focusShifted, bedroomActive;
     private bool bedroomStarted, livingStarted, relocating;
 
+    // Lectura para la presentación: conserva una sola autoridad sobre foco y transición.
+    public bool HasAbductionFocus => bedroomActive || windowActive;
+    public bool IsBedroomFocus => bedroomActive;
+    public bool IsBlockedFocus => windowActive && focusShifted;
+    public float ExteriorVisibility => contextWeight;
+    public Transform ShipOrigin => shipAmbience ? shipAmbience.transform : null;
+
     private void Awake()
     {
         nightVolume = nightAmbience.volume; windVolume = windowWind.volume; shipVolume = shipAmbience.volume;
