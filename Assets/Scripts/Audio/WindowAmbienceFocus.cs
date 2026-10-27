@@ -7,6 +7,7 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
     [SerializeField] private AbductionBeamController beam;
     [SerializeField] private Transform functionalExterior, blockedExterior, neutralExterior;
     [SerializeField] private Transform bedroomExterior;
+    [SerializeField] private Transform bathroomExterior;
     [SerializeField, Min(0.05f)] private float transitionSeconds = 0.8f;
     [SerializeField, Min(0.05f)] private float contextFadeSeconds = 0.6f;
     [SerializeField, Range(0f, 1f)] private float bedroomNatureGain = 0.9f;
@@ -17,14 +18,17 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
     [SerializeField, Min(1f)] private float shiftedShipGain = 3.4f;
     [SerializeField, Min(1f)] private float activeBeamShipGain = 1f;
     [SerializeField] private Vector3 shipOffset = new Vector3(0f, 3f, 5f);
+    [SerializeField] private Vector3 bathroomShipOffset = new Vector3(0f, 0.5f, 4.25f);
     private float nightVolume, windVolume, shipVolume;
     private float natureGain = 1f, shipGain = 1f, contextWeight = 1f;
     private Transform focus;
     private bool windowActive, focusShifted, bedroomActive;
     private bool bedroomStarted, livingStarted, relocating;
+    private bool bathroomActive, bathroomStarted;
 
     // Lectura para la presentación: conserva una sola autoridad sobre foco y transición.
-    public bool HasAbductionFocus => bedroomActive || windowActive;
+    public bool HasAbductionFocus => bedroomActive || windowActive || bathroomActive;
+    public bool IsBathroomFocus => bathroomActive;
     public bool IsBedroomFocus => bedroomActive;
     public bool IsBlockedFocus => windowActive && focusShifted;
     public float ExteriorVisibility => contextWeight;
@@ -84,11 +88,26 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
         windowActive = false; focus = neutralExterior;
     }
 
+    public void BeginBathroomAbduction()
+    {
+        if (bathroomStarted || !bathroomExterior) return;
+        bathroomStarted = true; bathroomActive = true;
+        bedroomActive = false; windowActive = false;
+        SwitchExteriorContext(bathroomExterior);
+    }
+
+    public void EndBathroomAbduction()
+    {
+        if (!bathroomActive) return;
+        bathroomActive = false;
+        SwitchExteriorContext(neutralExterior);
+    }
+
     private void Update()
     {
-        float naturalTarget = bedroomActive ? bedroomNatureGain
+        float naturalTarget = bathroomActive ? focusedNatureGain : bedroomActive ? bedroomNatureGain
             : windowActive ? (focusShifted ? shiftedNatureGain : focusedNatureGain) : 1f;
-        float shipTarget = bedroomActive ? bedroomShipGain
+        float shipTarget = bathroomActive ? focusedShipGain : bedroomActive ? bedroomShipGain
             : windowActive ? (focusShifted ? shiftedShipGain : focusedShipGain)
             : (beam && beam.IsBeamActive ? activeBeamShipGain : 1f);
         float blend = 1f - Mathf.Exp(-3f * Time.deltaTime / transitionSeconds);
@@ -96,17 +115,18 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
         shipGain = Mathf.Lerp(shipGain, shipTarget, blend);
         contextWeight = Mathf.MoveTowards(contextWeight, relocating ? 0f : 1f, Time.deltaTime / contextFadeSeconds);
         Transform target = focus ? focus : neutralExterior;
+        Vector3 targetShipOffset = target == bathroomExterior ? bathroomShipOffset : shipOffset;
         if (relocating && contextWeight <= 0f)
         {
             windowWind.transform.position = target.position;
-            shipAmbience.transform.position = target.position + shipOffset;
+            shipAmbience.transform.position = target.position + target.rotation * targetShipOffset;
             relocating = false;
         }
         else if (!relocating)
         {
             // Las dos ventanas de sala comparten fachada: aquí sí hay desplazamiento exterior.
             windowWind.transform.position = Vector3.Lerp(windowWind.transform.position, target.position, blend);
-            shipAmbience.transform.position = Vector3.Lerp(shipAmbience.transform.position, target.position + shipOffset, blend);
+            shipAmbience.transform.position = Vector3.Lerp(shipAmbience.transform.position, target.position + target.rotation * targetShipOffset, blend);
         }
         nightAmbience.volume = nightVolume * natureGain;
         windowWind.volume = windVolume * natureGain * contextWeight;

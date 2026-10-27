@@ -34,6 +34,7 @@ public sealed class AbductionPresentation : MonoBehaviour
     [SerializeField] private Transform owners;
     [SerializeField] private BedroomShutter bedroomShutter;
     [SerializeField] private Transform bedroomWindow, functionalWindow, blockedWindow;
+    [SerializeField] private Transform bathroomWindow;
     [SerializeField] private Light ownerGlow, functionalWindowLight, blockedWindowLight;
     [SerializeField] private AudioSource beamAudio;
     [SerializeField] private AudioLowPassFilter beamFilter;
@@ -82,7 +83,7 @@ public sealed class AbductionPresentation : MonoBehaviour
     private float visibility, acceptedBarkAt = float.NegativeInfinity;
     private float accompanyingVisibility;
     private Transform currentWindow;
-    private bool currentBlocked, currentBedroom, ready;
+    private bool currentBlocked, currentBedroom, currentBathroom, ready;
     private Color displayedColor;
     private Light[] existingLights;
     private Color[] originalLightColors;
@@ -91,7 +92,7 @@ public sealed class AbductionPresentation : MonoBehaviour
     private void Awake()
     {
         if (!beam || !windowFocus || !logicalVolume || !owners || !bedroomShutter ||
-            !bedroomWindow || !functionalWindow || !blockedWindow || !shipVisual || !shipEmitter ||
+            !bedroomWindow || !functionalWindow || !blockedWindow || !bathroomWindow || !shipVisual || !shipEmitter ||
             !exteriorBeam || !interiorBeam || !accompanyingBeam || !beamAudio || !beamFilter || !ownerGlow ||
             !functionalWindowLight || !blockedWindowLight || !shipLight || !bedroomWindowLight ||
             styles == null || styles.Length != 4 || shipRenderers == null || shipRenderers.Length == 0)
@@ -135,7 +136,8 @@ public sealed class AbductionPresentation : MonoBehaviour
         if (focused)
         {
             currentBedroom = windowFocus.IsBedroomFocus; currentBlocked = windowFocus.IsBlockedFocus;
-            currentWindow = currentBedroom ? bedroomWindow : currentBlocked ? blockedWindow : functionalWindow;
+            currentBathroom = windowFocus.IsBathroomFocus;
+            currentWindow = currentBathroom ? bathroomWindow : currentBedroom ? bedroomWindow : currentBlocked ? blockedWindow : functionalWindow;
         }
         visibility = Mathf.MoveTowards(visibility, focused ? 1f : 0f, Time.deltaTime / Mathf.Max(0.05f, fadeSeconds));
         float weight = visibility * windowFocus.ExteriorVisibility;
@@ -177,7 +179,7 @@ public sealed class AbductionPresentation : MonoBehaviour
         DrawAccompanyingBeam(accompanyingVisibility * (1f - connectedWeight), wave, feedback);
         ownerGlow.enabled = active;
         ownerGlow.color = displayedColor; ownerGlow.intensity = ownerGlowIntensity * energy * (active ? 1f : 0f);
-        bedroomWindowLight.enabled = focused && currentBedroom && open;
+        bedroomWindowLight.enabled = focused && (currentBedroom || currentBathroom) && open;
         Vector3 projectionTarget = owners.position + projectionTargetOffset;
         if (bedroomWindowLight.enabled) AimWindowLight(bedroomWindowLight, insideStart, projectionTarget, energy * weight);
         if (functionalWindowLight.enabled) AimWindowLight(functionalWindowLight, functionalWindow.position - functionalWindow.forward * 0.23f,
@@ -271,14 +273,16 @@ public sealed class AbductionPresentation : MonoBehaviour
     {
         if (beam) beam.InterferenceAccepted.RemoveListener(OnInterferenceAccepted);
         if (!ready) return;
-        logicalVolume.forceRenderingOff = originalForceRenderingOff;
-        foreach (var r in shipRenderers) { r.SetPropertyBlock(null); r.enabled = false; }
-        exteriorBeam.enabled = false; interiorBeam.enabled = false;
-        accompanyingBeam.enabled = false; accompanyingBeam.SetPropertyBlock(null);
-        bedroomWindowLight.enabled = false; shipLight.enabled = false;
+        if (logicalVolume) logicalVolume.forceRenderingOff = originalForceRenderingOff;
+        foreach (var r in shipRenderers) if (r) { r.SetPropertyBlock(null); r.enabled = false; }
+        if (exteriorBeam) exteriorBeam.enabled = false;
+        if (interiorBeam) interiorBeam.enabled = false;
+        if (accompanyingBeam) { accompanyingBeam.enabled = false; accompanyingBeam.SetPropertyBlock(null); }
+        if (bedroomWindowLight) bedroomWindowLight.enabled = false;
+        if (shipLight) shipLight.enabled = false;
         for (int i = 0; i < existingLights.Length; i++)
-        { existingLights[i].color = originalLightColors[i]; existingLights[i].intensity = originalLightIntensities[i]; }
-        beamAudio.Stop(); beamAudio.volume = originalVolume; beamAudio.pitch = originalPitch;
-        beamFilter.cutoffFrequency = originalCutoff;
+        { if (existingLights[i]) { existingLights[i].color = originalLightColors[i]; existingLights[i].intensity = originalLightIntensities[i]; } }
+        if (beamAudio) { beamAudio.Stop(); beamAudio.volume = originalVolume; beamAudio.pitch = originalPitch; }
+        if (beamFilter) beamFilter.cutoffFrequency = originalCutoff;
     }
 }
