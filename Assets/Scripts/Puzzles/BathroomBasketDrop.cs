@@ -16,6 +16,26 @@ public class BathroomBasketDrop : MonoBehaviour
     [SerializeField] private UnityEvent onSolved = new UnityEvent();
     [SerializeField] private UnityEvent onAbductionStarted = new UnityEvent();
     [SerializeField] private UnityEvent onBasketRemoved = new UnityEvent();
+    [Header("Accidente: un ladrido aceptado dentro del baño")]
+    [SerializeField] private AbductionBeamController beamController;
+    [SerializeField] private PlayerBark playerBark;
+    [SerializeField] private BathroomAccident accident;
+    [SerializeField] private BathroomImpactFeedback basketImpact;
+    [SerializeField] private AudioSource solvedAudio;
+    private BoxCollider playerZone;
+
+    private void OnEnable()
+    {
+        playerZone = GetComponent<BoxCollider>();
+        if (beamController) beamController.InterferenceAccepted.AddListener(TryActivate);
+    }
+
+    private void OnDisable()
+    {
+        if (beamController) beamController.InterferenceAccepted.RemoveListener(TryActivate);
+        playersInside.Clear();
+    }
+
     private readonly HashSet<Collider> playersInside = new HashSet<Collider>();
     private bool ownersArrived;
     private bool initialized;
@@ -61,7 +81,6 @@ public class BathroomBasketDrop : MonoBehaviour
     public void NotifyOwnersArrived()
     {
         ownersArrived = true;
-        TryActivate();
     }
 
     private void OnTriggerEnter(Collider other) => TrackPlayer(other);
@@ -72,12 +91,18 @@ public class BathroomBasketDrop : MonoBehaviour
     {
         if (!other.GetComponentInParent<CharacterController>() || !other.transform.root.CompareTag("Player")) return;
         playersInside.Add(other);
-        TryActivate();
     }
 
     private void TryActivate()
     {
-        if (!enabled || activated || !initialized || !ownersArrived || playersInside.Count == 0) return;
+        if (!enabled || activated || !initialized || !ownersArrived || !beamController
+            || !beamController.IsBeamActive || !playerBark || !playerZone) return;
+        playersInside.RemoveWhere(c => !c || !c.enabled || !c.gameObject.activeInHierarchy);
+        if (playersInside.Count == 0) return;
+        // Revalidar la posición evita aceptar un trigger obsoleto al salir del baño.
+        Vector3 local = playerZone.transform.InverseTransformPoint(playerBark.Origin.position) - playerZone.center;
+        Vector3 half = playerZone.size * 0.5f;
+        if (Mathf.Abs(local.x) > half.x || Mathf.Abs(local.y) > half.y || Mathf.Abs(local.z) > half.z) return;
         activated = true;
         StartCoroutine(DropLaundry());
     }
@@ -88,7 +113,9 @@ public class BathroomBasketDrop : MonoBehaviour
         doorTrigger.CloseForPuzzle(true);
         if (interferenceLight) interferenceLight.enabled = true;
         while (Mathf.Abs(doorHinge.angle) > 1.5f) yield return null;
+        if (accident) yield return accident.ReactAndTip();
         doorTrigger.LockForPuzzle();
+        if (basketImpact) basketImpact.Arm();
         laundryBasketRigidbody.isKinematic = false;
         for (int i = 0; i < clothes.Length; i++)
             clothes[i].isKinematic = false;
@@ -120,6 +147,7 @@ public class BathroomBasketDrop : MonoBehaviour
         if (clearTime < 0.4f) return;
         IsSolved = true;
         doorTrigger.CloseForPuzzle(false);
+        if (solvedAudio) solvedAudio.Play();
         onSolved.Invoke();
         StartCoroutine(AbductBasket());
         Debug.Log("Bathroom puzzle solved: clothes removed, door free.", this);
