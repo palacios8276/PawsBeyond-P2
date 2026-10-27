@@ -37860,7 +37860,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   impactAudio: {fileID: 1743909325}
   impactText: {fileID: 2071248445}
-  textOffset: {x: 0, y: 0.8, z: -0.7}
+  textOffset: {x: 0, y: 1, z: -1.8}
   textSeconds: 0.8
   textScale: 0.45
   minimumImpactSpeed: 0.6
