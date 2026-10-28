@@ -13,6 +13,7 @@ public class OwnersJourney : MonoBehaviour
     [SerializeField] private float observationTime = 1.25f;
     [SerializeField] private float departureDelay = 1.5f;
     [SerializeField] private int bedroomCrossing = 2;
+    [SerializeField] private int returnBedroomCrossing = -1;
     [SerializeField] private int bathroomCrossing = 8;
     [SerializeField] private int bathroomStop = 9;
     [SerializeField] private int bathroomExit = 11;
@@ -90,13 +91,16 @@ public class OwnersJourney : MonoBehaviour
             BeginJourney();
         }
         if (delay > 0f) { delay -= Time.deltaTime; return; }
-        if (IsComplete || narrativeHeld) return;
-        bedroomTrigger.RequestNarrativeOpening(next == bedroomCrossing);
+        if (narrativeHeld) return;
+        if (IsComplete) { bedroomTrigger.RequestNarrativeOpening(false); return; }
+        bool returningBedroom = returnBedroomCrossing >= 1 && next >= returnBedroomCrossing - 1 && next <= returnBedroomCrossing + 1;
+        bool crossingBedroom = next == bedroomCrossing || returningBedroom && next <= returnBedroomCrossing;
+        bedroomTrigger.RequestNarrativeOpening(next == bedroomCrossing || returningBedroom);
         bool bathroomBlocked = next == bathroomCrossing && bathroomPuzzle.IsActivated && !bathroomPuzzle.IsSolved;
         bathroomTrigger.RequestNarrativeOpening((next == bathroomCrossing || next == bathroomExit) && !bathroomBlocked);
-        if (next == bedroomCrossing)
+        if (crossingBedroom)
         {
-            if (Mathf.Abs(bedroomDoor.angle) < 75f) return;
+            if (Mathf.Abs(bedroomDoor.angle) < 75f || returningBedroom && float.IsNaN(bedroomDoor.angle)) return;
         }
         if (next == bathroomCrossing || next == bathroomExit)
         {
