@@ -60,6 +60,14 @@ public sealed class AbductionBeamController : MonoBehaviour
     public bool IsKitchenRepairing => kitchenRepairing;
     public void BeginKitchenRepair() => kitchenRepairing = true;
     public void EndKitchenRepair() => kitchenRepairing = false;
+    public void OnOperatorsRetreated()
+    {
+        if (!IsBeamActive) return;
+        kitchenRepairing = false;
+        interference = Mathf.Max(interference, uncontrolledThreshold);
+        lastBarkTime = Time.time;
+        RefreshState();
+    }
     public void OnKitchenConnectionSealed(bool bothSealed)
     {
         if (!IsBeamActive) return;

@@ -135,6 +135,15 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
         SwitchExteriorContext(neutralExterior);
     }
 
+    public void ResumeKitchenAtSecondWindow()
+    {
+        if (!kitchenStarted || !kitchenExteriorB || !kitchenWindowB) return;
+        kitchenActive = true;
+        kitchenWindow = kitchenWindowB;
+        kitchenVisualWindow = kitchenWindowB;
+        SwitchExteriorContext(kitchenExteriorB);
+    }
+
     private void Update()
     {
         float naturalTarget = kitchenActive || bathroomActive ? focusedNatureGain : bedroomActive ? bedroomNatureGain
