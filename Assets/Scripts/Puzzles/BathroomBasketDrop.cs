@@ -22,6 +22,8 @@ public class BathroomBasketDrop : MonoBehaviour
     [SerializeField] private BathroomAccident accident;
     [SerializeField] private BathroomImpactFeedback basketImpact;
     [SerializeField] private AudioSource solvedAudio;
+    [SerializeField] private Vector3 laundrySlideOffset;
+    [SerializeField, Min(0.1f)] private float laundrySlideSeconds = 0.45f;
     private BoxCollider playerZone;
 
     private void OnEnable()
@@ -114,6 +116,33 @@ public class BathroomBasketDrop : MonoBehaviour
         if (interferenceLight) interferenceLight.enabled = true;
         while (Mathf.Abs(doorHinge.angle) > 1.5f) yield return null;
         if (accident) yield return accident.ReactAndTip();
+        if (laundrySlideOffset.sqrMagnitude > 0.001f)
+        {
+            // El cesto sale del apoyo lateral antes de completar su caída física.
+            var basketConstraints = laundryBasketRigidbody.constraints;
+            var clothConstraints = new RigidbodyConstraints[clothes.Length];
+            laundryBasketRigidbody.constraints &= ~(RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ);
+            for (int i = 0; i < clothes.Length; i++)
+            {
+                clothConstraints[i] = clothes[i].constraints;
+                clothes[i].constraints &= ~(RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ);
+            }
+            Vector3 basketStart = laundryBasketRigidbody.position;
+            Vector3[] clothStarts = new Vector3[clothes.Length];
+            for (int i = 0; i < clothes.Length; i++) clothStarts[i] = clothes[i].position;
+            for (float elapsed = 0f; elapsed < laundrySlideSeconds; elapsed += Time.fixedDeltaTime)
+            {
+                Vector3 offset = laundrySlideOffset * Mathf.SmoothStep(0f, 1f, elapsed / laundrySlideSeconds);
+                laundryBasketRigidbody.MovePosition(basketStart + offset);
+                for (int i = 0; i < clothes.Length; i++) clothes[i].MovePosition(clothStarts[i] + offset);
+                yield return new WaitForFixedUpdate();
+            }
+            laundryBasketRigidbody.MovePosition(basketStart + laundrySlideOffset);
+            for (int i = 0; i < clothes.Length; i++) clothes[i].MovePosition(clothStarts[i] + laundrySlideOffset);
+            yield return new WaitForFixedUpdate();
+            laundryBasketRigidbody.constraints = basketConstraints;
+            for (int i = 0; i < clothes.Length; i++) clothes[i].constraints = clothConstraints[i];
+        }
         doorTrigger.LockForPuzzle();
         if (basketImpact) basketImpact.Arm();
         laundryBasketRigidbody.isKinematic = false;
