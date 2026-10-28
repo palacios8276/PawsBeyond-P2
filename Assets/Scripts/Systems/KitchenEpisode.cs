@@ -2,9 +2,8 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-public enum KitchenEpisodeStep { Dormant, FirstEncounter, FirstEscape, SecondEncounter, FirstRun, Repairing, FinalEscape, Complete }
+public enum KitchenEpisodeStep { Dormant, FirstEncounter, MovingToHide, FirstHidden, FirstRetreat, SecondEncounter, Repairing, FinalEscape, Complete }
 
-// Coordinación local de cocina; los episodios anteriores conservan sus autoridades.
 public sealed class KitchenEpisode : MonoBehaviour
 {
     [SerializeField] private EpisodeProgression progression;
@@ -13,36 +12,43 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField] private PlayerBark playerBark;
     [SerializeField] private AbductionBeamController beam;
     [SerializeField] private KitchenAlien firstAlien, secondAlien;
-    [SerializeField] private KitchenShutter firstShutter, secondShutter;
-    [SerializeField] private Rigidbody toyPrefab;
-    [SerializeField] private Transform toyLanding;
-    [SerializeField] private Transform[] firstContactRoute, firstExitRoute, repairRoute, secondContactRoute, secondExitRoute;
-    [SerializeField] private ParticleSystem repairParticles;
-    [SerializeField] private Transform firstReleaseHandle, secondReleaseHandle;
+    [SerializeField] private Rigidbody toyPrefab, bottlePrefab;
+    [SerializeField] private Transform toyLanding, bottleLanding;
+    [SerializeField] private Transform[] hidingRoute, windowReturnRoute, secondExitRoute;
+    [SerializeField] private Transform windowStaging, windowOutside, windowDeparture;
+    [SerializeField] private GameObject hidingCue;
     [SerializeField] private int arrivalWaypoint = 19;
     [SerializeField, Min(0.1f)] private float hearingRange = 4.5f;
     [SerializeField, Range(0f, 90f)] private float hearingAngle = 65f;
+    [Header("Ladridos válidos para ahuyentar: cada emisión cuenta una vez")]
+    [SerializeField, Min(1)] private int firstEncounterBarks = 3;
+    [SerializeField, Min(1)] private int hiddenEncounterBarks = 3;
+    [SerializeField, Min(1)] private int repairBarks = 3;
+    [SerializeField] private int currentBarkCount;
     [SerializeField] private bool secondEncounterReady;
+    [Header("Eventos locales")]
     [SerializeField] private UnityEvent onStarted = new UnityEvent();
     [SerializeField] private UnityEvent onHeardBark = new UnityEvent();
-    [SerializeField] private UnityEvent onFirstSealed = new UnityEvent();
+    [SerializeField] private UnityEvent onValidBark = new UnityEvent();
+    [SerializeField] private UnityEvent onHiding = new UnityEvent();
+    [SerializeField] private UnityEvent onDiscovered = new UnityEvent();
+    [SerializeField] private UnityEvent onFirstRetreated = new UnityEvent();
     [SerializeField] private UnityEvent onRepairStarted = new UnityEvent();
     [SerializeField] private UnityEvent onRepairInterrupted = new UnityEvent();
     [SerializeField] private UnityEvent onCompleted = new UnityEvent();
-    private bool arrived;
+    private bool arrived, ownsBarkFocus, discovered;
     private int consumedBark = -1;
-    private bool ownsBarkFocus;
     public KitchenEpisodeStep Step { get; private set; }
     public int AcceptedInterventions { get; private set; }
     public int HeardBarks { get; private set; }
     public int CompletionCount { get; private set; }
-    public KitchenAlien ActiveAlien => Step == KitchenEpisodeStep.FirstEncounter ? firstAlien
+    public int CurrentBarkCount => currentBarkCount;
+    public int BarksRequired => Mathf.Max(1, Step == KitchenEpisodeStep.FirstHidden ? hiddenEncounterBarks
+        : Step == KitchenEpisodeStep.Repairing ? repairBarks : firstEncounterBarks);
+    public KitchenAlien ActiveAlien => Step == KitchenEpisodeStep.FirstEncounter || Step == KitchenEpisodeStep.FirstHidden ? firstAlien
         : Step == KitchenEpisodeStep.SecondEncounter || Step == KitchenEpisodeStep.Repairing ? secondAlien : null;
 
-    private void OnEnable()
-    {
-        if (beam) beam.InterferenceAccepted.AddListener(OnInterferenceAccepted);
-    }
+    private void OnEnable() { if (beam) beam.InterferenceAccepted.AddListener(OnInterferenceAccepted); }
 
     public void OnWaypointReached(int index)
     {
@@ -97,57 +103,62 @@ public sealed class KitchenEpisode : MonoBehaviour
         var alien = ActiveAlien;
         if (!CanHear(alien) || playerBark.BarkCount == consumedBark) return;
         if (Step == KitchenEpisodeStep.FirstEncounter && alien.State != KitchenAlienState.Provoking) return;
-        if (Step == KitchenEpisodeStep.SecondEncounter && alien.State != KitchenAlienState.WaitingForBark) return;
-        if (Step == KitchenEpisodeStep.Repairing && alien.State != KitchenAlienState.Repairing) return;
+        if (Step == KitchenEpisodeStep.FirstHidden && alien.State != KitchenAlienState.Hiding) return;
+        if (Step == KitchenEpisodeStep.SecondEncounter || Step == KitchenEpisodeStep.Repairing && alien.State != KitchenAlienState.Repairing) return;
         consumedBark = playerBark.BarkCount;
         AcceptedInterventions++;
-        if (Step == KitchenEpisodeStep.FirstEncounter) { Step = KitchenEpisodeStep.FirstEscape; StartCoroutine(FinishFirst()); }
-        else if (Step == KitchenEpisodeStep.SecondEncounter) { Step = KitchenEpisodeStep.FirstRun; StartCoroutine(RunToRepair()); }
+        currentBarkCount++;
+        alien.ReactToBark();
+        onValidBark.Invoke();
+        if (Step == KitchenEpisodeStep.FirstHidden && !discovered)
+        {
+            discovered = true;
+            if (hidingCue) hidingCue.SetActive(false);
+            onDiscovered.Invoke();
+        }
+        if (currentBarkCount < BarksRequired) return;
+        currentBarkCount = 0;
+        if (Step == KitchenEpisodeStep.FirstEncounter) { Step = KitchenEpisodeStep.MovingToHide; StartCoroutine(HideFirst()); }
+        else if (Step == KitchenEpisodeStep.FirstHidden) { Step = KitchenEpisodeStep.FirstRetreat; StartCoroutine(RetreatFirst()); }
         else { Step = KitchenEpisodeStep.FinalEscape; StartCoroutine(FinishSecond()); }
     }
 
-    private IEnumerator FinishFirst()
+    private IEnumerator HideFirst()
     {
         yield return firstAlien.Startle();
-        yield return firstAlien.Travel(firstContactRoute);
-        if (firstReleaseHandle) firstAlien.FacePoint(firstReleaseHandle.position);
-        firstAlien.SetState(KitchenAlienState.ReleasingShutter);
-        yield return new WaitForSeconds(0.25f);
-        firstShutter.Release();
-        yield return new WaitUntil(() => firstShutter.IsClosed);
-        onFirstSealed.Invoke();
-        StartCoroutine(Exit(firstAlien, firstExitRoute));
-        if (!secondEncounterReady) yield break;
-        secondAlien.gameObject.SetActive(true);
-        secondAlien.SetState(KitchenAlienState.WaitingForBark);
-        Step = KitchenEpisodeStep.SecondEncounter;
+        yield return firstAlien.Travel(hidingRoute, true, true);
+        firstAlien.SetState(KitchenAlienState.Hiding);
+        Step = KitchenEpisodeStep.FirstHidden;
+        if (hidingCue) hidingCue.SetActive(true);
+        onHiding.Invoke();
     }
 
-    private IEnumerator RunToRepair()
+    private IEnumerator RetreatFirst()
     {
-        yield return secondAlien.Startle();
-        yield return secondAlien.Travel(repairRoute, true);
+        yield return firstAlien.Startle();
+        yield return firstAlien.Travel(windowReturnRoute, true, true);
+        yield return firstAlien.EscapeWindow(windowStaging, windowOutside, windowDeparture);
+        firstAlien.SetState(KitchenAlienState.Finished);
+        onFirstRetreated.Invoke();
+        if (!secondEncounterReady) yield break;
+        Step = KitchenEpisodeStep.SecondEncounter;
+        secondAlien.gameObject.SetActive(true);
+        yield return secondAlien.DistractWithOtherHand(bottlePrefab, bottleLanding);
         secondAlien.SetState(KitchenAlienState.Repairing);
         Step = KitchenEpisodeStep.Repairing;
-        if (repairParticles) repairParticles.Play();
+        secondAlien.SetRemoteActive(true);
         onRepairStarted.Invoke();
     }
 
     private IEnumerator FinishSecond()
     {
-        if (repairParticles) repairParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        secondAlien.SetRemoteActive(false);
         onRepairInterrupted.Invoke();
         yield return secondAlien.Startle();
-        yield return secondAlien.Travel(secondContactRoute);
-        if (secondReleaseHandle) secondAlien.FacePoint(secondReleaseHandle.position);
-        secondAlien.SetState(KitchenAlienState.ReleasingShutter);
-        yield return new WaitForSeconds(0.25f);
-        secondShutter.Release();
-        yield return new WaitUntil(() => secondShutter.IsClosed);
-        if (!firstShutter.IsClosed) yield break;
+        yield return secondAlien.Travel(secondExitRoute, true, true);
+        secondAlien.SetState(KitchenAlienState.Finished);
         Step = KitchenEpisodeStep.Complete;
         CompletionCount++;
-        StartCoroutine(Exit(secondAlien, secondExitRoute));
         beam.SetInteractionFocus(null);
         ownsBarkFocus = false;
         progression.CompleteKitchen();
@@ -155,18 +166,11 @@ public sealed class KitchenEpisode : MonoBehaviour
         onCompleted.Invoke();
     }
 
-    private IEnumerator Exit(KitchenAlien alien, Transform[] route)
-    {
-        yield return alien.Travel(route, true, true);
-        alien.SetState(KitchenAlienState.Finished);
-    }
-
     private void OnDisable()
     {
         if (beam) beam.InterferenceAccepted.RemoveListener(OnInterferenceAccepted);
-        if (beam && ownsBarkFocus) beam.SetInteractionFocus(null);
-        if (beam && ownsBarkFocus) beam.EndKitchenRepair();
-        if (repairParticles) repairParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        if (beam && ownsBarkFocus) { beam.SetInteractionFocus(null); beam.EndKitchenRepair(); }
+        if (hidingCue) hidingCue.SetActive(false);
+        if (secondAlien) secondAlien.SetRemoteActive(false);
     }
 }
-

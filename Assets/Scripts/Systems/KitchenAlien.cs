@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-public enum KitchenAlienState { Inactive, Appearing, Throwing, Provoking, WaitingForBark, Startled, ReleasingShutter, Running, Repairing, Finished }
+public enum KitchenAlienState { Inactive, Appearing, Throwing, Provoking, WaitingForBark, Startled, ReleasingShutter, Running, Repairing, Finished, Hiding, Crawling, ThrowingOtherHand }
 
 [RequireComponent(typeof(CharacterController))]
 public sealed class KitchenAlien : MonoBehaviour
@@ -10,6 +10,8 @@ public sealed class KitchenAlien : MonoBehaviour
     [SerializeField] private Transform visual, leftArm, rightArm, hand, listeningPoint;
     [SerializeField] private Transform attentionTarget;
     [SerializeField] private Transform repairTarget;
+    [SerializeField] private Transform otherHand;
+    [SerializeField] private RemoteControlFeedback remoteControl;
     [SerializeField, Min(0.1f)] private float runSpeed = 6.5f;
     [SerializeField, Min(0.1f)] private float startleSeconds = 0.45f;
     [SerializeField] private UnityEvent onStateChanged = new UnityEvent();
@@ -20,13 +22,18 @@ public sealed class KitchenAlien : MonoBehaviour
     [SerializeField] private UnityEvent onRunStarted = new UnityEvent();
     [SerializeField] private UnityEvent onRepairStarted = new UnityEvent();
     [SerializeField] private UnityEvent onRetreated = new UnityEvent();
+    [SerializeField] private UnityEvent onBottleReleased = new UnityEvent();
+    [SerializeField] private UnityEvent onBarkReaction = new UnityEvent();
     private CharacterController controller;
     private Vector3 visualStart;
+    private float recoilUntil;
     public KitchenAlienState State { get; private set; }
     public float RunSpeed => runSpeed;
     public Transform ListeningPoint => listeningPoint ? listeningPoint : transform;
     public int Throws { get; private set; }
     public Rigidbody ThrownToy { get; private set; }
+    public void ReactToBark() { recoilUntil = Time.time + 0.25f; onBarkReaction.Invoke(); }
+    public void SetRemoteActive(bool active) { if (remoteControl) remoteControl.SetOperating(active); }
 
     private void Awake()
     {
@@ -77,6 +84,47 @@ public sealed class KitchenAlien : MonoBehaviour
         yield return new WaitForSeconds(startleSeconds);
     }
 
+    public IEnumerator DistractWithOtherHand(Rigidbody prefab, Transform landing)
+    {
+        SetState(KitchenAlienState.Appearing);
+        yield return new WaitForSeconds(0.45f);
+        SetState(KitchenAlienState.ThrowingOtherHand);
+        yield return new WaitForSeconds(0.35f);
+        if (Throws == 0 && prefab && landing)
+        {
+            Transform release = otherHand ? otherHand : hand;
+            ThrownToy = Instantiate(prefab, release.position + transform.forward * 0.3f, Quaternion.identity);
+            ThrownToy.isKinematic = false;
+            float flight = 0.6f;
+            ThrownToy.linearVelocity = (landing.position - ThrownToy.position) / flight - Physics.gravity * (flight * 0.5f);
+            Throws++;
+            onBottleReleased.Invoke();
+        }
+    }
+
+    public IEnumerator EscapeWindow(Transform staging, Transform outside, Transform departure)
+    {
+        SetState(KitchenAlienState.Crawling);
+        float height = controller.height;
+        Vector3 center = controller.center;
+        float step = controller.stepOffset;
+        controller.height = 0.7f; controller.center = Vector3.up * 0.35f; controller.stepOffset = 0.1f;
+        visual.localScale = new Vector3(1f, 0.55f, 1f);
+        foreach (var target in new[] { staging, outside, departure })
+        {
+            while (Vector3.Distance(transform.position, target.position) > 0.04f)
+            {
+                Vector3 delta = target.position - transform.position;
+                Vector3 flat = Vector3.ProjectOnPlane(delta, Vector3.up);
+                if (flat.sqrMagnitude > 0.01f) FacePoint(target.position);
+                controller.Move(Vector3.ClampMagnitude(delta, 2f * Time.deltaTime));
+                yield return null;
+            }
+        }
+        visual.localScale = Vector3.one;
+        controller.height = height; controller.center = center; controller.stepOffset = step;
+    }
+
     public IEnumerator Travel(Transform[] route, bool avoidCharacters = false, bool optionalWaypoints = false)
     {
         SetState(KitchenAlienState.Running);
@@ -117,12 +165,15 @@ public sealed class KitchenAlien : MonoBehaviour
         bool running = State == KitchenAlienState.Running;
         float wave = Mathf.Sin(Time.time * (running ? 16f : 4f));
         visual.localPosition = visualStart + Vector3.up * (running ? Mathf.Abs(wave) * 0.045f : 0f);
-        float lean = State == KitchenAlienState.Repairing ? 18f : State == KitchenAlienState.Startled ? -18f : running ? 12f : 0f;
+        float lean = State == KitchenAlienState.Crawling ? 15f : State == KitchenAlienState.Repairing ? 8f
+            : State == KitchenAlienState.Startled || Time.time < recoilUntil ? -18f : running ? 12f : 0f;
         visual.localRotation = Quaternion.Euler(lean, 0f, 0f);
         float arms = State == KitchenAlienState.Startled ? -145f : State == KitchenAlienState.Repairing ? -65f + wave * 12f
             : State == KitchenAlienState.ReleasingShutter ? -80f : State == KitchenAlienState.Throwing ? -125f : running ? wave * 40f : -12f;
         leftArm.localRotation = Quaternion.Euler(arms, 0f, -18f);
         rightArm.localRotation = Quaternion.Euler(running ? -arms : arms, 0f, 18f);
+        if (State == KitchenAlienState.ThrowingOtherHand)
+        { leftArm.localRotation = Quaternion.Euler(-125f, 0f, -18f); rightArm.localRotation = Quaternion.Euler(-65f, 0f, 18f); }
     }
 }
 
