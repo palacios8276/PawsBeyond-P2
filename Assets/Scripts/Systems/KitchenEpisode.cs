@@ -145,6 +145,8 @@ public sealed class KitchenEpisode : MonoBehaviour
         Step = KitchenEpisodeStep.Complete;
         CompletionCount++;
         StartCoroutine(Exit(secondAlien, secondExitRoute));
+        beam.SetInteractionFocus(null);
+        ownsBarkFocus = false;
         progression.CompleteKitchen();
         journey.SetNarrativeHold(false);
         onCompleted.Invoke();
@@ -152,7 +154,7 @@ public sealed class KitchenEpisode : MonoBehaviour
 
     private IEnumerator Exit(KitchenAlien alien, Transform[] route)
     {
-        yield return alien.Travel(route);
+        yield return alien.Travel(route, true);
         alien.SetState(KitchenAlienState.Finished);
     }
 

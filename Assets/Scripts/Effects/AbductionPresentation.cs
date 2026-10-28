@@ -83,7 +83,7 @@ public sealed class AbductionPresentation : MonoBehaviour
     private float visibility, acceptedBarkAt = float.NegativeInfinity;
     private float accompanyingVisibility;
     private Transform currentWindow;
-    private bool currentBlocked, currentBedroom, currentBathroom, ready;
+    private bool currentBlocked, currentBedroom, currentBathroom, currentKitchen, ready;
     private Color displayedColor;
     private Light[] existingLights;
     private Color[] originalLightColors;
@@ -137,7 +137,9 @@ public sealed class AbductionPresentation : MonoBehaviour
         {
             currentBedroom = windowFocus.IsBedroomFocus; currentBlocked = windowFocus.IsBlockedFocus;
             currentBathroom = windowFocus.IsBathroomFocus;
-            currentWindow = currentBathroom ? bathroomWindow : currentBedroom ? bedroomWindow : currentBlocked ? blockedWindow : functionalWindow;
+            currentKitchen = windowFocus.IsKitchenFocus;
+            currentWindow = currentKitchen ? windowFocus.ActiveKitchenWindow
+                : currentBathroom ? bathroomWindow : currentBedroom ? bedroomWindow : currentBlocked ? blockedWindow : functionalWindow;
         }
         visibility = Mathf.MoveTowards(visibility, focused ? 1f : 0f, Time.deltaTime / Mathf.Max(0.05f, fadeSeconds));
         float weight = visibility * windowFocus.ExteriorVisibility;
@@ -163,7 +165,8 @@ public sealed class AbductionPresentation : MonoBehaviour
         Vector3 outward = currentWindow.forward;
         Vector3 entry = currentWindow.position;
         DrawBeam(exteriorBeam, shipEmitter.position, entry + outward * 0.08f, exteriorWidth, weight, energy, style, false, wave, feedback);
-        bool open = !currentBlocked && (!currentBedroom || !bedroomShutter.IsClosed);
+        bool open = !currentBlocked && (!currentBedroom || !bedroomShutter.IsClosed)
+            && (!currentKitchen || !windowFocus.IsKitchenConnectionClosed);
         Vector3 insideStart = entry - outward * 0.23f;
         Vector3 insideEnd = owners.position + ownerTargetOffset;
         // Solo recorta la representación si encuentra una superficie. No altera detecciones.
@@ -179,7 +182,7 @@ public sealed class AbductionPresentation : MonoBehaviour
         DrawAccompanyingBeam(accompanyingVisibility * (1f - connectedWeight), wave, feedback);
         ownerGlow.enabled = active;
         ownerGlow.color = displayedColor; ownerGlow.intensity = ownerGlowIntensity * energy * (active ? 1f : 0f);
-        bedroomWindowLight.enabled = focused && (currentBedroom || currentBathroom) && open;
+        bedroomWindowLight.enabled = focused && (currentBedroom || currentBathroom || currentKitchen) && open;
         Vector3 projectionTarget = owners.position + projectionTargetOffset;
         if (bedroomWindowLight.enabled) AimWindowLight(bedroomWindowLight, insideStart, projectionTarget, energy * weight);
         if (functionalWindowLight.enabled) AimWindowLight(functionalWindowLight, functionalWindow.position - functionalWindow.forward * 0.23f,

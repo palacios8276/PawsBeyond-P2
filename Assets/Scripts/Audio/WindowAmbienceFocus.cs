@@ -8,6 +8,9 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
     [SerializeField] private Transform functionalExterior, blockedExterior, neutralExterior;
     [SerializeField] private Transform bedroomExterior;
     [SerializeField] private Transform bathroomExterior;
+    [SerializeField] private Transform kitchenWindowA, kitchenWindowB, kitchenExteriorA, kitchenExteriorB;
+    [SerializeField] private KitchenShutter kitchenShutterA, kitchenShutterB;
+    [SerializeField] private Vector3 kitchenShipOffset = new Vector3(0f, 0.8f, 4.25f);
     [SerializeField, Min(0.05f)] private float transitionSeconds = 0.8f;
     [SerializeField, Min(0.05f)] private float contextFadeSeconds = 0.6f;
     [SerializeField, Range(0f, 1f)] private float bedroomNatureGain = 0.9f;
@@ -25,9 +28,15 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
     private bool windowActive, focusShifted, bedroomActive;
     private bool bedroomStarted, livingStarted, relocating;
     private bool bathroomActive, bathroomStarted;
+    private bool kitchenActive, kitchenStarted;
+    private Transform kitchenWindow, kitchenVisualWindow;
 
     // Lectura para la presentación: conserva una sola autoridad sobre foco y transición.
-    public bool HasAbductionFocus => bedroomActive || windowActive || bathroomActive;
+    public bool HasAbductionFocus => bedroomActive || windowActive || bathroomActive || kitchenActive;
+    public bool IsKitchenFocus => kitchenActive;
+    public Transform ActiveKitchenWindow => kitchenVisualWindow;
+    public bool IsKitchenConnectionClosed => kitchenVisualWindow == kitchenWindowA
+        ? kitchenShutterA && kitchenShutterA.IsClosed : kitchenShutterB && kitchenShutterB.IsClosed;
     public bool IsBathroomFocus => bathroomActive;
     public bool IsBedroomFocus => bedroomActive;
     public bool IsBlockedFocus => windowActive && focusShifted;
@@ -103,11 +112,34 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
         SwitchExteriorContext(neutralExterior);
     }
 
+    public void BeginKitchenAbduction()
+    {
+        if (kitchenStarted || !kitchenExteriorA || !kitchenWindowA) return;
+        kitchenStarted = true; kitchenActive = true;
+        bathroomActive = false; bedroomActive = false; windowActive = false;
+        kitchenWindow = kitchenWindowA; kitchenVisualWindow = kitchenWindowA;
+        SwitchExteriorContext(kitchenExteriorA);
+    }
+
+    public void ShiftKitchenConnection()
+    {
+        if (!kitchenActive || kitchenWindow == kitchenWindowB || !kitchenExteriorB) return;
+        kitchenWindow = kitchenWindowB;
+        SwitchExteriorContext(kitchenExteriorB);
+    }
+
+    public void EndKitchenAbduction()
+    {
+        if (!kitchenActive) return;
+        kitchenActive = false;
+        SwitchExteriorContext(neutralExterior);
+    }
+
     private void Update()
     {
-        float naturalTarget = bathroomActive ? focusedNatureGain : bedroomActive ? bedroomNatureGain
+        float naturalTarget = kitchenActive || bathroomActive ? focusedNatureGain : bedroomActive ? bedroomNatureGain
             : windowActive ? (focusShifted ? shiftedNatureGain : focusedNatureGain) : 1f;
-        float shipTarget = bathroomActive ? focusedShipGain : bedroomActive ? bedroomShipGain
+        float shipTarget = kitchenActive || bathroomActive ? focusedShipGain : bedroomActive ? bedroomShipGain
             : windowActive ? (focusShifted ? shiftedShipGain : focusedShipGain)
             : (beam && beam.IsBeamActive ? activeBeamShipGain : 1f);
         float blend = 1f - Mathf.Exp(-3f * Time.deltaTime / transitionSeconds);
@@ -115,11 +147,13 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
         shipGain = Mathf.Lerp(shipGain, shipTarget, blend);
         contextWeight = Mathf.MoveTowards(contextWeight, relocating ? 0f : 1f, Time.deltaTime / contextFadeSeconds);
         Transform target = focus ? focus : neutralExterior;
-        Vector3 targetShipOffset = target == bathroomExterior ? bathroomShipOffset : shipOffset;
+        Vector3 targetShipOffset = target == kitchenExteriorA || target == kitchenExteriorB ? kitchenShipOffset
+            : target == bathroomExterior ? bathroomShipOffset : shipOffset;
         if (relocating && contextWeight <= 0f)
         {
             windowWind.transform.position = target.position;
             shipAmbience.transform.position = target.position + target.rotation * targetShipOffset;
+            if (kitchenActive) kitchenVisualWindow = kitchenWindow;
             relocating = false;
         }
         else if (!relocating)

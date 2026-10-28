@@ -58,7 +58,7 @@ public sealed class KitchenAlien : MonoBehaviour
         yield return new WaitForSeconds(startleSeconds);
     }
 
-    public IEnumerator Travel(Transform[] route)
+    public IEnumerator Travel(Transform[] route, bool avoidPlayer = false)
     {
         SetState(KitchenAlienState.Running);
         foreach (var point in route)
@@ -67,6 +67,17 @@ public sealed class KitchenAlien : MonoBehaviour
             while (Vector3.ProjectOnPlane(point.position - transform.position, Vector3.up).sqrMagnitude > 0.012f)
             {
                 Vector3 direction = Vector3.ProjectOnPlane(point.position - transform.position, Vector3.up);
+                if (avoidPlayer && attentionTarget)
+                {
+                    Vector3 occupiedPoint = Vector3.ProjectOnPlane(attentionTarget.position - point.position, Vector3.up);
+                    // Los puntos de salida son guía, no mecanismos que deban tocarse exactamente.
+                    if (occupiedPoint.sqrMagnitude < 0.64f && direction.sqrMagnitude < 1f) break;
+                    if (Physics.CapsuleCast(transform.position + Vector3.up * 0.3f,
+                        transform.position + Vector3.up * 1.05f, 0.24f, direction.normalized,
+                        out RaycastHit blocker, 0.8f, ~0, QueryTriggerInteraction.Ignore)
+                        && blocker.collider.transform.root.CompareTag("Player"))
+                        direction = direction.normalized * 0.25f + Vector3.Cross(Vector3.up, direction.normalized);
+                }
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * 14f);
                 controller.Move(Vector3.ClampMagnitude(direction, runSpeed * Time.deltaTime) + Vector3.down * Time.deltaTime);
                 yield return null;

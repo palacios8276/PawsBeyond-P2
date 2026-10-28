@@ -1423,6 +1423,8 @@ MonoBehaviour:
   onInterferenceAccepted:
     m_PersistentCalls:
       m_Calls: []
+  repairRecoveryMultiplier: 2
+  sealedConnectionInterference: 0.25
 --- !u!1 &75761112
 GameObject:
   m_ObjectHideFlags: 0
@@ -9397,8 +9399,8 @@ MonoBehaviour:
   currentEpisode: 0
   livingRoomContentReady: 1
   bathroomContentReady: 1
-  kitchenContentReady: 0
-  returnContentReady: 0
+  kitchenContentReady: 1
+  returnContentReady: 1
   closingContentReady: 0
   journeyStarted: 0
   bathroomSolved: 0
@@ -23310,6 +23312,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2088032411677763386, guid: fcd0023ef0951144ebd2a4a4253fc16f, type: 3}
   m_PrefabInstance: {fileID: 760673814}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &762453922
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 762453923}
+  m_Layer: 0
+  m_Name: ReturnToLiving_0
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &762453923
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 762453922}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.3, y: 1.5, z: -13.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 970827793}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &766679750
 GameObject:
   m_ObjectHideFlags: 0
@@ -24388,6 +24421,10 @@ MonoBehaviour:
   - {fileID: 1656722254}
   - {fileID: 1190810309}
   - {fileID: 2101620017}
+  - {fileID: 762453923}
+  - {fileID: 2042344878}
+  - {fileID: 1844370983}
+  - {fileID: 1545130359}
   owners:
   - {fileID: 1861499483}
   - {fileID: 1900006831}
@@ -28562,6 +28599,41 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 958722457}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &970827792
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 970827793}
+  m_Layer: 0
+  m_Name: KitchenSafeReturn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &970827793
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 970827792}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 762453923}
+  - {fileID: 2042344878}
+  - {fileID: 1844370983}
+  - {fileID: 1545130359}
+  m_Father: {fileID: 1106065177}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &972337000
 GameObject:
   m_ObjectHideFlags: 0
@@ -33120,6 +33192,7 @@ Transform:
   - {fileID: 986905527}
   - {fileID: 2038722883}
   - {fileID: 2105195235}
+  - {fileID: 970827793}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1106065178
@@ -33171,22 +33244,106 @@ MonoBehaviour:
   secondEncounterReady: 1
   onStarted:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1399984916}
+        m_TargetAssemblyTypeName: WindowAmbienceFocus, Assembly-CSharp
+        m_MethodName: BeginKitchenAbduction
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onHeardBark:
     m_PersistentCalls:
       m_Calls: []
   onFirstSealed:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1399984916}
+        m_TargetAssemblyTypeName: WindowAmbienceFocus, Assembly-CSharp
+        m_MethodName: ShiftKitchenConnection
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 75071465}
+        m_TargetAssemblyTypeName: AbductionBeamController, Assembly-CSharp
+        m_MethodName: OnKitchenConnectionSealed
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onRepairStarted:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 75071465}
+        m_TargetAssemblyTypeName: AbductionBeamController, Assembly-CSharp
+        m_MethodName: BeginKitchenRepair
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onRepairInterrupted:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 75071465}
+        m_TargetAssemblyTypeName: AbductionBeamController, Assembly-CSharp
+        m_MethodName: EndKitchenRepair
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onCompleted:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 75071465}
+        m_TargetAssemblyTypeName: AbductionBeamController, Assembly-CSharp
+        m_MethodName: OnKitchenConnectionSealed
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 1399984916}
+        m_TargetAssemblyTypeName: WindowAmbienceFocus, Assembly-CSharp
+        m_MethodName: EndKitchenAbduction
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1115061778
 GameObject:
   m_ObjectHideFlags: 0
@@ -39231,6 +39388,13 @@ MonoBehaviour:
   neutralExterior: {fileID: 626531398}
   bedroomExterior: {fileID: 896872395}
   bathroomExterior: {fileID: 1588886654}
+  kitchenWindowA: {fileID: 1866442691}
+  kitchenWindowB: {fileID: 1019079711}
+  kitchenExteriorA: {fileID: 706139067}
+  kitchenExteriorB: {fileID: 804481352}
+  kitchenShutterA: {fileID: 8173233346874299338}
+  kitchenShutterB: {fileID: 2543825974023545335}
+  kitchenShipOffset: {x: 0, y: 0.8, z: 4.25}
   transitionSeconds: 1.2
   contextFadeSeconds: 0.6
   bedroomNatureGain: 0.9
@@ -43331,6 +43495,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1545130358
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1545130359}
+  m_Layer: 0
+  m_Name: ReturnToLiving_3
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1545130359
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1545130358}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.3, y: 1.5, z: -8.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 970827793}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1545461019
 GameObject:
@@ -53471,6 +53666,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1838237546}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1844370982
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1844370983}
+  m_Layer: 0
+  m_Name: ReturnToLiving_2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1844370983
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1844370982}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.3, y: 1.25, z: -9.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 970827793}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1844432896
 GameObject:
   m_ObjectHideFlags: 0
@@ -64947,6 +65173,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2039903621}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &2042344877
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2042344878}
+  m_Layer: 0
+  m_Name: ReturnToLiving_1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2042344878
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2042344877}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 5.3, y: 1.25, z: -12.4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 970827793}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2045552056
 GameObject:
   m_ObjectHideFlags: 0

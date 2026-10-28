@@ -53,6 +53,21 @@ public sealed class AbductionBeamController : MonoBehaviour
     }
     private Transform interactionFocus;
     public void SetInteractionFocus(Transform focus) => interactionFocus = focus;
+    [Header("Reparación local de cocina")]
+    [SerializeField, Min(1f)] private float repairRecoveryMultiplier = 2f;
+    [SerializeField, Range(0f, 1f)] private float sealedConnectionInterference = 0.25f;
+    private bool kitchenRepairing;
+    public bool IsKitchenRepairing => kitchenRepairing;
+    public void BeginKitchenRepair() => kitchenRepairing = true;
+    public void EndKitchenRepair() => kitchenRepairing = false;
+    public void OnKitchenConnectionSealed(bool bothSealed)
+    {
+        if (!IsBeamActive) return;
+        interference = bothSealed ? Mathf.Max(interference, uncontrolledThreshold)
+            : Mathf.Clamp01(interference + sealedConnectionInterference);
+        lastBarkTime = Time.time;
+        RefreshState();
+    }
     private int lastConsumedBark = -1;
     private float lastBarkTime = float.NegativeInfinity;
     private Color displayedColor;
@@ -101,7 +116,8 @@ public sealed class AbductionBeamController : MonoBehaviour
     {
         if (!beamActive) return;
         if (Time.time - lastBarkTime >= recoveryDelay)
-            interference = Mathf.MoveTowards(interference, 0f, recoveryPerSecond * Time.deltaTime);
+            interference = Mathf.MoveTowards(interference, 0f,
+                recoveryPerSecond * (kitchenRepairing ? repairRecoveryMultiplier : 1f) * Time.deltaTime);
         RefreshState();
     }
 
@@ -153,6 +169,8 @@ public sealed class AbductionBeamController : MonoBehaviour
 
     private void OnDisable()
     {
+        kitchenRepairing = false;
+        interactionFocus = null;
         if (!Application.isPlaying) return;
         transform.localScale = originalScale;
         if (beamRenderer && originalBlock != null) beamRenderer.SetPropertyBlock(originalBlock);
