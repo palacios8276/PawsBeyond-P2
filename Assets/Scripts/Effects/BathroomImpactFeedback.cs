@@ -18,7 +18,7 @@ public sealed class BathroomImpactFeedback : MonoBehaviour
             if (contact.normal.y < 0.5f) continue;
             played = true;
             if (impactAudio) impactAudio.Play();
-            if (comic) comic.ShowAt(contact.point);
+            if (comic) comic.ShowAt(transform.position);
             return;
         }
     }

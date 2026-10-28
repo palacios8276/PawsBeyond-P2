@@ -38064,9 +38064,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   label: {fileID: 2071248445}
-  offset: {x: 0, y: 1, z: -1.8}
-  duration: 0.8
-  size: 0.45
+  offset: {x: 1.2, y: 0.95, z: -0.4}
+  duration: 1.25
+  size: 0.36
 --- !u!1 &1497394636
 GameObject:
   m_ObjectHideFlags: 0
@@ -48111,8 +48111,8 @@ MonoBehaviour:
   accident: {fileID: 1828542574}
   basketImpact: {fileID: 1496392253}
   solvedAudio: {fileID: 1376273040}
-  laundrySlideOffset: {x: 0, y: -0.55, z: -1.6}
-  laundrySlideSeconds: 0.45
+  laundrySlideOffset: {x: 0, y: 0, z: -1.8}
+  laundrySlideSeconds: 0.55
 --- !u!65 &1828542572
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -48175,13 +48175,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   journey: {fileID: 807891694}
   lightShelf: {fileID: 2101931009}
-  shelfCollider: {fileID: 1220710141}
   contactAudio: {fileID: 370759517}
   reactionOffset: {x: -1.2, y: 0, z: -0.6}
   reactionSeconds: 0.5
-  tipSeconds: 0.25
+  shakeSeconds: 0.25
   recoverySeconds: 0.65
-  shelfTip: {x: 0, y: 0, z: 22}
+  shakeDistance: 0.025
 --- !u!1 &1829850280
 GameObject:
   m_ObjectHideFlags: 0
@@ -62208,7 +62207,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2999858859736087077, guid: ad472d9a801c1a043a41dc32c6e5eca2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 1.68
+      value: 1.71
       objectReference: {fileID: 0}
     - target: {fileID: 2999858859736087077, guid: ad472d9a801c1a043a41dc32c6e5eca2, type: 3}
       propertyPath: m_LocalPosition.z

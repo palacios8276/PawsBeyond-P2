@@ -115,7 +115,7 @@ public class BathroomBasketDrop : MonoBehaviour
         doorTrigger.CloseForPuzzle(true);
         if (interferenceLight) interferenceLight.enabled = true;
         while (Mathf.Abs(doorHinge.angle) > 1.5f) yield return null;
-        if (accident) yield return accident.ReactAndTip();
+        if (accident) yield return accident.ReactAndShake();
         if (laundrySlideOffset.sqrMagnitude > 0.001f)
         {
             // El cesto sale del apoyo lateral antes de completar su caída física.

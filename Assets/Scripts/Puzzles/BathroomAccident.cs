@@ -5,17 +5,18 @@ public sealed class BathroomAccident : MonoBehaviour
 {
     [SerializeField] private OwnersJourney journey;
     [SerializeField] private Transform lightShelf;
-    [SerializeField] private Collider shelfCollider;
     [SerializeField] private AudioSource contactAudio;
     [SerializeField] private Vector3 reactionOffset = new Vector3(-1.2f, 0f, -0.6f);
     [SerializeField, Min(0.1f)] private float reactionSeconds = 0.5f;
-    [SerializeField, Min(0.1f)] private float tipSeconds = 0.25f;
+    [UnityEngine.Serialization.FormerlySerializedAs("tipSeconds")]
+    [SerializeField, Min(0.1f)] private float shakeSeconds = 0.25f;
     [SerializeField, Min(0.1f)] private float recoverySeconds = 0.65f;
-    [SerializeField] private Vector3 shelfTip = new Vector3(0f, 0f, -22f);
+    [SerializeField, Min(0f)] private float shakeDistance = 0.025f;
     private Vector3 restPosition;
-    private bool reacting;
+    private bool reacting, shelfShaking;
+    private Vector3 shelfRestPosition;
 
-    public IEnumerator ReactAndTip()
+    public IEnumerator ReactAndShake()
     {
         restPosition = journey.transform.position;
         reacting = true;
@@ -29,15 +30,17 @@ public sealed class BathroomAccident : MonoBehaviour
         }
         journey.transform.position = contactPosition;
         if (contactAudio) contactAudio.Play();
-        Quaternion restRotation = lightShelf.localRotation;
-        for (float t = 0f; t < tipSeconds; t += Time.deltaTime)
+        shelfRestPosition = lightShelf.localPosition;
+        shelfShaking = true;
+        for (float t = 0f; t < shakeSeconds; t += Time.deltaTime)
         {
-            float amount = Mathf.SmoothStep(0f, 1f, t / tipSeconds);
-            lightShelf.localRotation = restRotation * Quaternion.Euler(shelfTip * amount);
+            float progress = t / shakeSeconds;
+            float shake = Mathf.Sin(progress * Mathf.PI * 4f) * Mathf.Sin(progress * Mathf.PI);
+            lightShelf.localPosition = shelfRestPosition + Vector3.right * (shake * shakeDistance);
             yield return null;
         }
-        lightShelf.localRotation = restRotation * Quaternion.Euler(shelfTip);
-        if (shelfCollider) shelfCollider.enabled = false;
+        lightShelf.localPosition = shelfRestPosition;
+        shelfShaking = false;
         StartCoroutine(RecoverOwners(contactPosition));
     }
 
@@ -57,6 +60,8 @@ public sealed class BathroomAccident : MonoBehaviour
     private void OnDisable()
     {
         StopAllCoroutines();
+        if (shelfShaking && lightShelf) lightShelf.localPosition = shelfRestPosition;
+        shelfShaking = false;
         if (reacting && journey) { journey.transform.position = restPosition; journey.SetNarrativeHold(false); }
         reacting = false;
     }
