@@ -18,6 +18,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField] private Transform toyLanding;
     [SerializeField] private Transform[] firstContactRoute, firstExitRoute, repairRoute, secondContactRoute, secondExitRoute;
     [SerializeField] private ParticleSystem repairParticles;
+    [SerializeField] private Transform firstReleaseHandle, secondReleaseHandle;
     [SerializeField] private int arrivalWaypoint = 19;
     [SerializeField, Min(0.1f)] private float hearingRange = 4.5f;
     [SerializeField, Range(0f, 90f)] private float hearingAngle = 65f;
@@ -109,6 +110,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     {
         yield return firstAlien.Startle();
         yield return firstAlien.Travel(firstContactRoute);
+        if (firstReleaseHandle) firstAlien.FacePoint(firstReleaseHandle.position);
         firstAlien.SetState(KitchenAlienState.ReleasingShutter);
         yield return new WaitForSeconds(0.25f);
         firstShutter.Release();
@@ -124,7 +126,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     private IEnumerator RunToRepair()
     {
         yield return secondAlien.Startle();
-        yield return secondAlien.Travel(repairRoute);
+        yield return secondAlien.Travel(repairRoute, true);
         secondAlien.SetState(KitchenAlienState.Repairing);
         Step = KitchenEpisodeStep.Repairing;
         if (repairParticles) repairParticles.Play();
@@ -137,6 +139,7 @@ public sealed class KitchenEpisode : MonoBehaviour
         onRepairInterrupted.Invoke();
         yield return secondAlien.Startle();
         yield return secondAlien.Travel(secondContactRoute);
+        if (secondReleaseHandle) secondAlien.FacePoint(secondReleaseHandle.position);
         secondAlien.SetState(KitchenAlienState.ReleasingShutter);
         yield return new WaitForSeconds(0.25f);
         secondShutter.Release();
@@ -154,7 +157,7 @@ public sealed class KitchenEpisode : MonoBehaviour
 
     private IEnumerator Exit(KitchenAlien alien, Transform[] route)
     {
-        yield return alien.Travel(route, true);
+        yield return alien.Travel(route, true, true);
         alien.SetState(KitchenAlienState.Finished);
     }
 
@@ -162,6 +165,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     {
         if (beam) beam.InterferenceAccepted.RemoveListener(OnInterferenceAccepted);
         if (beam && ownsBarkFocus) beam.SetInteractionFocus(null);
+        if (beam && ownsBarkFocus) beam.EndKitchenRepair();
         if (repairParticles) repairParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 }

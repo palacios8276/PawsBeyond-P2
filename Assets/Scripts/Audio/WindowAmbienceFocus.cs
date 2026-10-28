@@ -32,7 +32,7 @@ public sealed class WindowAmbienceFocus : MonoBehaviour
     private Transform kitchenWindow, kitchenVisualWindow;
 
     // Lectura para la presentación: conserva una sola autoridad sobre foco y transición.
-    public bool HasAbductionFocus => bedroomActive || windowActive || bathroomActive || kitchenActive;
+    public bool HasAbductionFocus => bedroomActive || windowActive || bathroomActive || (kitchenActive && !relocating);
     public bool IsKitchenFocus => kitchenActive;
     public Transform ActiveKitchenWindow => kitchenVisualWindow;
     public bool IsKitchenConnectionClosed => kitchenVisualWindow == kitchenWindowA

@@ -9,10 +9,17 @@ public sealed class KitchenAlien : MonoBehaviour
 {
     [SerializeField] private Transform visual, leftArm, rightArm, hand, listeningPoint;
     [SerializeField] private Transform attentionTarget;
+    [SerializeField] private Transform repairTarget;
     [SerializeField, Min(0.1f)] private float runSpeed = 6.5f;
     [SerializeField, Min(0.1f)] private float startleSeconds = 0.45f;
     [SerializeField] private UnityEvent onStateChanged = new UnityEvent();
     [SerializeField] private UnityEvent onToyReleased = new UnityEvent();
+    [Header("Sincronización audiovisual por acción, sin clips obligatorios")]
+    [SerializeField] private UnityEvent onAppeared = new UnityEvent();
+    [SerializeField] private UnityEvent onStartled = new UnityEvent();
+    [SerializeField] private UnityEvent onRunStarted = new UnityEvent();
+    [SerializeField] private UnityEvent onRepairStarted = new UnityEvent();
+    [SerializeField] private UnityEvent onRetreated = new UnityEvent();
     private CharacterController controller;
     private Vector3 visualStart;
     public KitchenAlienState State { get; private set; }
@@ -30,8 +37,20 @@ public sealed class KitchenAlien : MonoBehaviour
     public void SetState(KitchenAlienState state)
     {
         if (State == state) return;
+        var previous = State;
         State = state;
         onStateChanged.Invoke();
+        if (state == KitchenAlienState.Appearing || previous == KitchenAlienState.Inactive && state == KitchenAlienState.WaitingForBark) onAppeared.Invoke();
+        if (state == KitchenAlienState.Startled) onStartled.Invoke();
+        if (state == KitchenAlienState.Running) onRunStarted.Invoke();
+        if (state == KitchenAlienState.Repairing) onRepairStarted.Invoke();
+        if (state == KitchenAlienState.Finished) onRetreated.Invoke();
+    }
+
+    public void FacePoint(Vector3 point)
+    {
+        Vector3 direction = Vector3.ProjectOnPlane(point - transform.position, Vector3.up);
+        if (direction.sqrMagnitude > 0.01f) transform.rotation = Quaternion.LookRotation(direction);
     }
 
     public IEnumerator Provoke(Rigidbody prefab, Transform landing)
@@ -42,10 +61,10 @@ public sealed class KitchenAlien : MonoBehaviour
         yield return new WaitForSeconds(0.35f);
         if (Throws == 0 && prefab && landing)
         {
-            ThrownToy = Instantiate(prefab, hand.position, Quaternion.identity);
+            ThrownToy = Instantiate(prefab, hand.position + transform.forward * 0.28f, Quaternion.identity);
             ThrownToy.isKinematic = false;
             float flight = 0.55f;
-            ThrownToy.linearVelocity = (landing.position - hand.position) / flight - Physics.gravity * (flight * 0.5f);
+            ThrownToy.linearVelocity = (landing.position - ThrownToy.position) / flight - Physics.gravity * (flight * 0.5f);
             Throws++;
             onToyReleased.Invoke();
         }
@@ -58,7 +77,7 @@ public sealed class KitchenAlien : MonoBehaviour
         yield return new WaitForSeconds(startleSeconds);
     }
 
-    public IEnumerator Travel(Transform[] route, bool avoidPlayer = false)
+    public IEnumerator Travel(Transform[] route, bool avoidCharacters = false, bool optionalWaypoints = false)
     {
         SetState(KitchenAlienState.Running);
         foreach (var point in route)
@@ -67,15 +86,16 @@ public sealed class KitchenAlien : MonoBehaviour
             while (Vector3.ProjectOnPlane(point.position - transform.position, Vector3.up).sqrMagnitude > 0.012f)
             {
                 Vector3 direction = Vector3.ProjectOnPlane(point.position - transform.position, Vector3.up);
-                if (avoidPlayer && attentionTarget)
+                if (avoidCharacters && attentionTarget)
                 {
                     Vector3 occupiedPoint = Vector3.ProjectOnPlane(attentionTarget.position - point.position, Vector3.up);
                     // Los puntos de salida son guía, no mecanismos que deban tocarse exactamente.
-                    if (occupiedPoint.sqrMagnitude < 0.64f && direction.sqrMagnitude < 1f) break;
+                    if (optionalWaypoints && occupiedPoint.sqrMagnitude < 0.64f && direction.sqrMagnitude < 1f) break;
                     if (Physics.CapsuleCast(transform.position + Vector3.up * 0.3f,
                         transform.position + Vector3.up * 1.05f, 0.24f, direction.normalized,
                         out RaycastHit blocker, 0.8f, ~0, QueryTriggerInteraction.Ignore)
-                        && blocker.collider.transform.root.CompareTag("Player"))
+                        && blocker.collider.GetComponentInParent<CharacterController>()
+                        && blocker.collider.GetComponentInParent<CharacterController>() != controller)
                         direction = direction.normalized * 0.25f + Vector3.Cross(Vector3.up, direction.normalized);
                 }
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(direction), Time.deltaTime * 14f);
@@ -88,6 +108,7 @@ public sealed class KitchenAlien : MonoBehaviour
     private void Update()
     {
         if (State == KitchenAlienState.Inactive) return;
+        if (State == KitchenAlienState.Repairing && repairTarget) FacePoint(repairTarget.position);
         if (attentionTarget && (State == KitchenAlienState.Provoking || State == KitchenAlienState.WaitingForBark || State == KitchenAlienState.Appearing))
         {
             Vector3 direction = Vector3.ProjectOnPlane(attentionTarget.position - transform.position, Vector3.up);

@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 6154406079290389705}
   - component: {fileID: 4954983110232595138}
   - component: {fileID: 5350139202507918128}
+  - component: {fileID: 2488182442209924352}
   m_Layer: 0
   m_Name: KitchenToy
   m_TagString: Untagged
@@ -153,3 +154,19 @@ MonoBehaviour:
   maxSpeed: 7
   breakDistance: 4
   carryHeight: 0.55
+--- !u!114 &2488182442209924352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6016748407979811341}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40de7ea33506da04ab21442be72d9f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minimumImpactSpeed: 0.4
+  onFirstImpact:
+    m_PersistentCalls:
+      m_Calls: []
