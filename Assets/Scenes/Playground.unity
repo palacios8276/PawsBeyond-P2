@@ -33168,7 +33168,7 @@ MonoBehaviour:
   arrivalWaypoint: 19
   hearingRange: 4.5
   hearingAngle: 65
-  secondEncounterReady: 0
+  secondEncounterReady: 1
   onStarted:
     m_PersistentCalls:
       m_Calls: []
