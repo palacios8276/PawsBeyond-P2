@@ -24,6 +24,10 @@ public class BathroomBasketDrop : MonoBehaviour
     [SerializeField] private AudioSource solvedAudio;
     [SerializeField] private Vector3 laundrySlideOffset;
     [SerializeField, Min(0.1f)] private float laundrySlideSeconds = 0.45f;
+    [Header("Retirada visible después de resolver")]
+    [SerializeField] private Transform[] basketParkingPath;
+    [SerializeField, Min(0.1f)] private float basketParkingSpeed = 1.8f;
+    private Collider[] basketColliders;
     private BoxCollider playerZone;
 
     private void OnEnable()
@@ -64,6 +68,7 @@ public class BathroomBasketDrop : MonoBehaviour
             enabled = false;
             return;
         }
+        basketColliders = laundryBasketRigidbody.GetComponentsInChildren<Collider>();
         laundryBasketRigidbody.isKinematic = true;
         if (interferenceLight) interferenceLight.enabled = false;
         if (abductionBeam) abductionBeam.SetActive(false);
@@ -178,31 +183,60 @@ public class BathroomBasketDrop : MonoBehaviour
         doorTrigger.CloseForPuzzle(false);
         if (solvedAudio) solvedAudio.Play();
         onSolved.Invoke();
-        StartCoroutine(AbductBasket());
+        StartCoroutine(ParkBasket());
         Debug.Log("Bathroom puzzle solved: clothes removed, door free.", this);
     }
 
-    private IEnumerator AbductBasket()
+    private IEnumerator ParkBasket()
     {
-        // This event only follows the player's solution; it cannot remove the clothes.
+        // Conserva el evento de inicio de retirada y la continuación ya conectada.
         onAbductionStarted.Invoke();
         laundryBasketRigidbody.linearVelocity = Vector3.zero;
         laundryBasketRigidbody.angularVelocity = Vector3.zero;
         laundryBasketRigidbody.isKinematic = true;
-        laundryBasketRigidbody.detectCollisions = false;
-        if (interferenceLight) interferenceLight.enabled = true;
-        if (abductionBeam) abductionBeam.SetActive(true);
-        float elapsed = 0f;
-        while (elapsed < 1.2f)
+        var previousConstraints = laundryBasketRigidbody.constraints;
+        laundryBasketRigidbody.constraints &= ~(RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ);
+        if (basketParkingPath == null || basketParkingPath.Length == 0)
         {
-            laundryBasketRigidbody.MovePosition(laundryBasketRigidbody.position + Vector3.up * (2f * Time.fixedDeltaTime));
-            elapsed += Time.fixedDeltaTime;
-            yield return new WaitForFixedUpdate();
+            laundryBasketRigidbody.constraints = previousConstraints;
+            Debug.LogError("Bathroom basket: missing parking path.", this);
+            yield break;
         }
-        laundryBasketRigidbody.gameObject.SetActive(false);
-        if (interferenceLight) interferenceLight.enabled = false;
-        if (abductionBeam) abductionBeam.SetActive(false);
-        IsBasketRemoved = true;
+        foreach (var stop in basketParkingPath)
+        {
+            if (!stop) continue;
+            while (Vector3.Distance(laundryBasketRigidbody.position, stop.position) > 0.01f)
+            {
+                Vector3 next = Vector3.MoveTowards(laundryBasketRigidbody.position, stop.position,
+                    basketParkingSpeed * Time.fixedDeltaTime);
+                if (CanParkStep(next - laundryBasketRigidbody.position)) laundryBasketRigidbody.MovePosition(next);
+                yield return new WaitForFixedUpdate();
+            }
+        }
+        laundryBasketRigidbody.constraints = previousConstraints;
+        IsBasketRemoved = true; // Apartado del acceso: el objeto sigue visible y sólido.
         onBasketRemoved.Invoke();
+    }
+
+    private bool CanParkStep(Vector3 offset)
+    {
+        foreach (var own in basketColliders)
+        {
+            if (!own || !own.enabled || own.isTrigger) continue;
+            Vector3 next = own.transform.position + offset;
+            var nearby = Physics.OverlapBox(own.bounds.center + offset,
+                own.bounds.extents + Vector3.one * 0.01f, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+            foreach (var other in nearby)
+            {
+                if (other.attachedRigidbody == laundryBasketRigidbody) continue;
+                if (!Physics.ComputePenetration(own, next, own.transform.rotation,
+                    other, other.transform.position, other.transform.rotation, out Vector3 separation, out float depth)
+                    || depth <= 0.002f) continue;
+                // Permite el contacto de apoyo con el piso, no atravesar actores o muebles.
+                if (separation.y > 0.8f && other.bounds.max.y < laundryBasketRigidbody.position.y - 0.2f) continue;
+                return false;
+            }
+        }
+        return true;
     }
 }

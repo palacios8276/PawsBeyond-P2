@@ -11,6 +11,7 @@ public sealed class DogBarkAudio : MonoBehaviour
     private float baseVolume, basePitch;
     private bool levelsCaptured;
     private int nextVariant;
+    public float LastPlaybackDuration { get; private set; }
 
     public void PlayBark() => TryPlayBark();
 
@@ -30,6 +31,7 @@ public sealed class DogBarkAudio : MonoBehaviour
         // Un solo emisor: otra pulsación válida reemplaza el clip, sin acumular voces.
         audioSource.Stop();
         audioSource.clip = clip;
+        LastPlaybackDuration = clip.length / Mathf.Max(0.01f, Mathf.Abs(audioSource.pitch));
         audioSource.Play();
         if (barkComic) barkComic.ShowMessage(reinforced ? "WOOF! WOOF!" : "WOOF!");
         return true;
