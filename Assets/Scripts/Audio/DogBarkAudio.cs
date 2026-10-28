@@ -4,6 +4,8 @@ public sealed class DogBarkAudio : MonoBehaviour
 {
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip[] variants;
+    [SerializeField] private AudioClip reinforcedClip;
+    [SerializeField] private WorldComicFeedback barkComic;
     [SerializeField, Range(1f, 2f)] private float reinforcedVolumeMultiplier = 1.15f;
     [SerializeField, Range(0.5f, 1.5f)] private float reinforcedPitchMultiplier = 0.9f;
     private float baseVolume, basePitch;
@@ -18,7 +20,7 @@ public sealed class DogBarkAudio : MonoBehaviour
     {
         if (!isActiveAndEnabled || !audioSource || !audioSource.isActiveAndEnabled
             || variants == null || variants.Length == 0) return false;
-        var clip = variants[nextVariant % variants.Length];
+        var clip = reinforced ? reinforcedClip : variants[nextVariant % variants.Length];
         if (!clip) return false;
         if (!levelsCaptured)
         { baseVolume = audioSource.volume; basePitch = audioSource.pitch; levelsCaptured = true; }
@@ -29,6 +31,7 @@ public sealed class DogBarkAudio : MonoBehaviour
         audioSource.Stop();
         audioSource.clip = clip;
         audioSource.Play();
+        if (barkComic) barkComic.ShowMessage(reinforced ? "WOOF! WOOF!" : "WOOF!");
         return true;
     }
     private void OnDisable()
