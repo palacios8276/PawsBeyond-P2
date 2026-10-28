@@ -51,6 +51,8 @@ public sealed class AbductionBeamController : MonoBehaviour
         if (beamLight && !externalPresentation) beamLight.enabled = active;
         if (beamAudio && !externalPresentation) { if (active && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play(); else if (!active) beamAudio.Stop(); }
     }
+    private Transform interactionFocus;
+    public void SetInteractionFocus(Transform focus) => interactionFocus = focus;
     private int lastConsumedBark = -1;
     private float lastBarkTime = float.NegativeInfinity;
     private Color displayedColor;
@@ -82,7 +84,7 @@ public sealed class AbductionBeamController : MonoBehaviour
         if (!IsBeamActive || !barkSource || barkSource.BarkCount == lastConsumedBark) return;
         lastConsumedBark = barkSource.BarkCount;
         Transform origin = barkSource.Origin;
-        Vector3 target = beamRenderer ? beamRenderer.bounds.ClosestPoint(origin.position) : transform.position;
+        Vector3 target = interactionFocus ? interactionFocus.position : beamRenderer ? beamRenderer.bounds.ClosestPoint(origin.position) : transform.position;
         Vector3 offset = target - origin.position;
         if (offset.sqrMagnitude > barkRange * barkRange) return;
         // El perro gira sobre Y; la orientación se comprueba en el plano del piso.
@@ -165,3 +167,4 @@ public sealed class AbductionBeamController : MonoBehaviour
         uncontrolledThreshold = Mathf.Clamp(uncontrolledThreshold, intenseThreshold + 0.01f, 1f);
     }
 }
+
