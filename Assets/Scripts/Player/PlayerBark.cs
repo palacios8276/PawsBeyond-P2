@@ -48,7 +48,8 @@ public sealed class PlayerBark : MonoBehaviour
         LastInterference = reinforced ? reinforcedInterference : normalInterference;
         combinationPending = !reinforced;
         combinationExpiresAt = Time.time + combinationWindow;
-        nextBarkTime = Time.time + minimumInterval;
+        nextBarkTime = Time.time + (reinforced
+            ? Mathf.Max(minimumInterval, barkAudio.LastPlaybackDuration) : minimumInterval);
         BarkCount++;
         onBarked.Invoke();
         return true;

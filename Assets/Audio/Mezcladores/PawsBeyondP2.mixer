@@ -42,8 +42,7 @@ AudioMixerGroupController:
   m_Name: Ambience
   m_AudioMixer: {fileID: 24100000}
   m_GroupID: 4ae5a2d0216c6dd4880bd2f2c93730cf
-  m_Children:
-  - {fileID: -6724665564489583087}
+  m_Children: []
   m_Volume: 0e960e7148849614daf234946350f4fd
   m_Pitch: 331774817c0d29b498e8b18a510c1c58
   m_Send: 00000000000000000000000000000000
@@ -62,8 +61,7 @@ AudioMixerGroupController:
   m_Name: SFX
   m_AudioMixer: {fileID: 24100000}
   m_GroupID: 162f9236e56961642a1377cf8aa49277
-  m_Children:
-  - {fileID: -6307497324465895115}
+  m_Children: []
   m_Volume: c3ed3f95b22a5dd4c96061839134e767
   m_Pitch: e4bc2801a7f797a488918dc44d574bc1
   m_Send: 00000000000000000000000000000000
@@ -137,6 +135,9 @@ AudioMixerGroupController:
   m_AudioMixer: {fileID: 24100000}
   m_GroupID: 30c714bcb0f1f714586128ba7c5ba853
   m_Children:
+  - {fileID: -2977232206142062058}
+  - {fileID: -6307497324465895115}
+  - {fileID: -6724665564489583087}
   - {fileID: 5040033190930943559}
   m_Volume: c2cff1599ddf37b438a1cd070c3af848
   m_Pitch: 1e60b8b172fc10e47884577b61e01719
@@ -170,7 +171,8 @@ AudioMixerSnapshotController:
   m_Name: Snapshot
   m_AudioMixer: {fileID: 24100000}
   m_SnapshotID: b1bdeec678e79dc4a982ae4324fc96df
-  m_FloatValues: {}
+  m_FloatValues:
+    c2cff1599ddf37b438a1cd070c3af848: -2
   m_TransitionOverrides: {}
 --- !u!243 &5040033190930943559
 AudioMixerGroupController:
@@ -181,8 +183,7 @@ AudioMixerGroupController:
   m_Name: Music
   m_AudioMixer: {fileID: 24100000}
   m_GroupID: 151a26eea9162d745a7aa0e1d576ad6f
-  m_Children:
-  - {fileID: -2977232206142062058}
+  m_Children: []
   m_Volume: d4805de9e4f839743a7faeee8672a3c8
   m_Pitch: ccfc59c49c0b8304d82145a5343c7b73
   m_Send: 00000000000000000000000000000000

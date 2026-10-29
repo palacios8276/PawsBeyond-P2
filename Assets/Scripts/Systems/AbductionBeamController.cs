@@ -40,13 +40,41 @@ public sealed class AbductionBeamController : MonoBehaviour
     [SerializeField] private BeamStateChangedEvent onStateChanged = new BeamStateChangedEvent();
     [SerializeField] private UnityEvent onUncontrolled = new UnityEvent();
     [SerializeField] private bool beamActive = true;
+    [SerializeField] private bool externalPresentation;
+    [SerializeField] private UnityEvent onInterferenceAccepted = new UnityEvent();
+    public UnityEvent InterferenceAccepted => onInterferenceAccepted;
     public bool IsBeamActive => isActiveAndEnabled && beamActive;
     public void SetBeamActive(bool active)
     {
         beamActive = active;
         if (beamRenderer) beamRenderer.enabled = active;
-        if (beamLight) beamLight.enabled = active;
-        if (beamAudio) { if (active && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play(); else if (!active) beamAudio.Stop(); }
+        if (beamLight && !externalPresentation) beamLight.enabled = active;
+        if (beamAudio && !externalPresentation) { if (active && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play(); else if (!active) beamAudio.Stop(); }
+    }
+    private Transform interactionFocus;
+    public void SetInteractionFocus(Transform focus) => interactionFocus = focus;
+    [Header("Reparación local de cocina")]
+    [SerializeField, Min(1f)] private float repairRecoveryMultiplier = 2f;
+    [SerializeField, Range(0f, 1f)] private float sealedConnectionInterference = 0.25f;
+    private bool kitchenRepairing;
+    public bool IsKitchenRepairing => kitchenRepairing;
+    public void BeginKitchenRepair() => kitchenRepairing = true;
+    public void EndKitchenRepair() => kitchenRepairing = false;
+    public void OnOperatorsRetreated()
+    {
+        if (!IsBeamActive) return;
+        kitchenRepairing = false;
+        interference = Mathf.Max(interference, uncontrolledThreshold);
+        lastBarkTime = Time.time;
+        RefreshState();
+    }
+    public void OnKitchenConnectionSealed(bool bothSealed)
+    {
+        if (!IsBeamActive) return;
+        interference = bothSealed ? Mathf.Max(interference, uncontrolledThreshold)
+            : Mathf.Clamp01(interference + sealedConnectionInterference);
+        lastBarkTime = Time.time;
+        RefreshState();
     }
     private int lastConsumedBark = -1;
     private float lastBarkTime = float.NegativeInfinity;
@@ -68,7 +96,7 @@ public sealed class AbductionBeamController : MonoBehaviour
         if (beamAudio)
         {
             originalVolume = beamAudio.volume; originalPitch = beamAudio.pitch;
-            if (beamActive && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play();
+            if (!externalPresentation && beamActive && beamAudio.clip && !beamAudio.isPlaying) beamAudio.Play();
         }
     }
 
@@ -79,7 +107,7 @@ public sealed class AbductionBeamController : MonoBehaviour
         if (!IsBeamActive || !barkSource || barkSource.BarkCount == lastConsumedBark) return;
         lastConsumedBark = barkSource.BarkCount;
         Transform origin = barkSource.Origin;
-        Vector3 target = beamRenderer ? beamRenderer.bounds.ClosestPoint(origin.position) : transform.position;
+        Vector3 target = interactionFocus ? interactionFocus.position : beamRenderer ? beamRenderer.bounds.ClosestPoint(origin.position) : transform.position;
         Vector3 offset = target - origin.position;
         if (offset.sqrMagnitude > barkRange * barkRange) return;
         // El perro gira sobre Y; la orientación se comprueba en el plano del piso.
@@ -89,13 +117,15 @@ public sealed class AbductionBeamController : MonoBehaviour
         interference = Mathf.Clamp01(interference + barkSource.LastInterference);
         lastBarkTime = Time.time;
         RefreshState();
+        onInterferenceAccepted.Invoke();
     }
 
     private void Update()
     {
         if (!beamActive) return;
         if (Time.time - lastBarkTime >= recoveryDelay)
-            interference = Mathf.MoveTowards(interference, 0f, recoveryPerSecond * Time.deltaTime);
+            interference = Mathf.MoveTowards(interference, 0f,
+                recoveryPerSecond * (kitchenRepairing ? repairRecoveryMultiplier : 1f) * Time.deltaTime);
         RefreshState();
     }
 
@@ -113,6 +143,13 @@ public sealed class AbductionBeamController : MonoBehaviour
     private void LateUpdate()
     {
         if (!beamActive) return;
+        if (externalPresentation)
+        {
+            // Se conserva el pulso del volumen lógico utilizado por ladridos y TV.
+            float logicalOscillation = Mathf.Sin(Time.time * Mathf.Lerp(2f, 18f, interference));
+            transform.localScale = originalScale * (1f + logicalOscillation * interference * pulseAmount);
+            return;
+        }
         Color target = currentState == AbductionBeamState.Uncontrolled ? uncontrolledColor
             : currentState == AbductionBeamState.IntenseInterference ? intenseColor
             : currentState == AbductionBeamState.Affected ? affectedColor : stableColor;
@@ -140,11 +177,13 @@ public sealed class AbductionBeamController : MonoBehaviour
 
     private void OnDisable()
     {
+        kitchenRepairing = false;
+        interactionFocus = null;
         if (!Application.isPlaying) return;
         transform.localScale = originalScale;
         if (beamRenderer && originalBlock != null) beamRenderer.SetPropertyBlock(originalBlock);
-        if (beamLight) { beamLight.intensity = originalLightIntensity; beamLight.color = originalLightColor; }
-        if (beamAudio) { beamAudio.Stop(); beamAudio.volume = originalVolume; beamAudio.pitch = originalPitch; }
+        if (beamLight && !externalPresentation) { beamLight.intensity = originalLightIntensity; beamLight.color = originalLightColor; }
+        if (beamAudio && !externalPresentation) { beamAudio.Stop(); beamAudio.volume = originalVolume; beamAudio.pitch = originalPitch; }
     }
 
     private void OnValidate()
@@ -154,3 +193,4 @@ public sealed class AbductionBeamController : MonoBehaviour
         uncontrolledThreshold = Mathf.Clamp(uncontrolledThreshold, intenseThreshold + 0.01f, 1f);
     }
 }
+

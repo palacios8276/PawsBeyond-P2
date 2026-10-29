@@ -10,6 +10,7 @@ public sealed class BedroomShutter : MonoBehaviour
     [SerializeField] private float closedHeight = 1.58f;
     [SerializeField, Min(0.01f)] private float closureTolerance = 0.06f;
     [SerializeField] private UnityEvent onClosed = new UnityEvent();
+    [SerializeField] private AudioSource closureAudio;
     private Vector3 toyStart;
     private bool armed, released;
     public bool IsClosed { get; private set; }
@@ -43,6 +44,7 @@ public sealed class BedroomShutter : MonoBehaviour
         shutter.angularVelocity = Vector3.zero;
         shutter.isKinematic = true;
         IsClosed = true;
+        if (closureAudio && closureAudio.clip) closureAudio.Play();
         onClosed.Invoke();
     }
 }
