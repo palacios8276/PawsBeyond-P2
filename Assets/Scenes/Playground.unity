@@ -31145,7 +31145,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 16777215
   m_fontColor: {r: 1, g: 1, b: 1, a: 0}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -31158,7 +31158,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -31293,7 +31293,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 100
@@ -34850,9 +34850,7 @@ MonoBehaviour:
   firstAlien: {fileID: 8753658762549877287}
   secondAlien: {fileID: 8593987786462139455}
   toyPrefab: {fileID: 4954983110232595138, guid: 8b5eab02a0bb9a54291b2e82f1e939d3, type: 3}
-  bottlePrefab: {fileID: 3955771043067892650, guid: 9d198d71202e5d347b50936591fa4e09, type: 3}
   toyLanding: {fileID: 1343930205}
-  bottleLanding: {fileID: 1438954799}
   hidingRoute:
   - {fileID: 2090739269}
   - {fileID: 1351474703}
@@ -34882,7 +34880,7 @@ MonoBehaviour:
   arrivalWaypoint: 19
   hearingRange: 4.5
   hearingAngle: 65
-  firstEncounterBarks: 3
+  firstEncounterBarks: 4
   hiddenEncounterBarks: 3
   repairBarks: 3
   currentBarkCount: 0

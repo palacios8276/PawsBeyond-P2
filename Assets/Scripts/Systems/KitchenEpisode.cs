@@ -12,8 +12,8 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField] private PlayerBark playerBark;
     [SerializeField] private AbductionBeamController beam;
     [SerializeField] private KitchenAlien firstAlien, secondAlien;
-    [SerializeField] private Rigidbody toyPrefab, bottlePrefab;
-    [SerializeField] private Transform toyLanding, bottleLanding;
+    [SerializeField] private Rigidbody toyPrefab;
+    [SerializeField] private Transform toyLanding;
     [SerializeField] private Transform[] hidingRoute, windowReturnRoute, secondExitRoute;
     [SerializeField] private Transform windowStaging, windowOutside, windowDeparture;
     [SerializeField] private GameObject hidingCue;
@@ -21,7 +21,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField, Min(0.1f)] private float hearingRange = 4.5f;
     [SerializeField, Range(0f, 90f)] private float hearingAngle = 65f;
     [Header("Ladridos válidos para ahuyentar: cada emisión cuenta una vez")]
-    [SerializeField, Min(1)] private int firstEncounterBarks = 3;
+    [SerializeField, Min(1)] private int firstEncounterBarks = 4;
     [SerializeField, Min(1)] private int hiddenEncounterBarks = 3;
     [SerializeField, Min(1)] private int repairBarks = 3;
     [SerializeField] private int currentBarkCount;
@@ -143,7 +143,6 @@ public sealed class KitchenEpisode : MonoBehaviour
         if (!secondEncounterReady) yield break;
         Step = KitchenEpisodeStep.SecondEncounter;
         secondAlien.gameObject.SetActive(true);
-        yield return secondAlien.DistractWithOtherHand(bottlePrefab, bottleLanding);
         secondAlien.SetState(KitchenAlienState.Repairing);
         Step = KitchenEpisodeStep.Repairing;
         secondAlien.SetRemoteActive(true);
