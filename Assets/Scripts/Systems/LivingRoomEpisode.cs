@@ -16,6 +16,7 @@ public sealed class LivingRoomEpisode : MonoBehaviour
     [SerializeField] private UnityEvent onWindowFocusShifted = new UnityEvent();
     private bool attempted, waitingForBarks, redirected, atBlockedWindow, completed;
     private float blockedUntil;
+    public bool IsWaitingForBarks => waitingForBarks && !completed;
 
     public void OnWaypointReached(int index)
     {

@@ -54,6 +54,7 @@ public class BathroomBasketDrop : MonoBehaviour
     public bool BathroomPuzzleSolved => IsSolved;
     public bool IsBasketRemoved { get; private set; }
     public int RemovedClothesCount { get; private set; }
+    public bool IsAwaitingBark => ownersArrived && initialized && !activated && beamController && beamController.IsBeamActive;
     public bool IsActivated => activated;
     public bool IsReady => ready;
     public Rigidbody ActiveBasket => laundryBasketRigidbody;
