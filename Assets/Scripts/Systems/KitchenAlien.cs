@@ -24,6 +24,9 @@ public sealed class KitchenAlien : MonoBehaviour
     [SerializeField] private UnityEvent onRetreated = new UnityEvent();
     [SerializeField] private UnityEvent onBottleReleased = new UnityEvent();
     [SerializeField] private UnityEvent onBarkReaction = new UnityEvent();
+    [Header("Retirada física exterior")]
+    [SerializeField, Min(0.1f)] private float exteriorRetreatSeconds = 2f;
+    [SerializeField, Min(0.1f)] private float exteriorRetreatSpeed = 4f;
     private CharacterController controller;
     private Vector3 visualStart;
     private float recoilUntil;
@@ -125,6 +128,47 @@ public sealed class KitchenAlien : MonoBehaviour
         controller.height = height; controller.center = center; controller.stepOffset = step;
     }
 
+    public IEnumerator RetreatExterior(Transform destination)
+    {
+        SetState(KitchenAlienState.Running);
+        float started = Time.time;
+        while (Vector3.ProjectOnPlane(destination.position - transform.position, Vector3.up).sqrMagnitude > 0.012f
+            || Time.time - started < exteriorRetreatSeconds || VisibleToPlayer())
+        {
+            Vector3 direction = Vector3.ProjectOnPlane(destination.position - transform.position, Vector3.up);
+            if (direction.sqrMagnitude > 0.012f)
+            {
+                FacePoint(destination.position);
+                controller.Move(Vector3.ClampMagnitude(direction, exteriorRetreatSpeed * Time.deltaTime));
+            }
+            yield return null;
+        }
+        SetState(KitchenAlienState.Finished);
+        gameObject.SetActive(false);
+    }
+
+    private bool VisibleToPlayer()
+    {
+        Camera camera = Camera.main;
+        if (!camera) return true;
+        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(camera);
+        foreach (var renderer in GetComponentsInChildren<Renderer>())
+        {
+            Bounds bounds = renderer.bounds;
+            if (!renderer.enabled || !GeometryUtility.TestPlanesAABB(planes, bounds)) continue;
+            // Revisar centro y esquinas evita retirar una silueta todavía visible en el marco.
+            for (int i = -1; i < 8; i++)
+            {
+                Vector3 sample = i < 0 ? bounds.center : bounds.center + Vector3.Scale(bounds.extents,
+                    new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                Vector3 viewport = camera.WorldToViewportPoint(sample);
+                if (viewport.z <= 0 || viewport.x < 0 || viewport.x > 1 || viewport.y < 0 || viewport.y > 1) continue;
+                if (!Physics.Linecast(camera.transform.position, sample, out RaycastHit hit, ~0, QueryTriggerInteraction.Ignore)
+                    || hit.collider.transform.IsChildOf(transform)) return true;
+            }
+        }
+        return false;
+    }
     public IEnumerator Travel(Transform[] route, bool avoidCharacters = false, bool optionalWaypoints = false)
     {
         SetState(KitchenAlienState.Running);

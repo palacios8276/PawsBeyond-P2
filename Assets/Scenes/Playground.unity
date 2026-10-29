@@ -34828,6 +34828,7 @@ Transform:
   - {fileID: 231288916}
   - {fileID: 421220718}
   - {fileID: 1438954799}
+  - {fileID: 1816378989}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1106065178
@@ -34876,6 +34877,7 @@ MonoBehaviour:
   windowStaging: {fileID: 1386751149}
   windowOutside: {fileID: 1379223348}
   windowDeparture: {fileID: 231288916}
+  firstExteriorRetreat: {fileID: 1816378989}
   hidingCue: {fileID: 421220715}
   arrivalWaypoint: 19
   hearingRange: 4.5
@@ -54435,6 +54437,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1816252474}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1816378988
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1816378989}
+  m_Layer: 0
+  m_Name: A_ExteriorRetreat
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1816378989
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1816378988}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -4, y: 0.12, z: -24}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1106065177}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1822732062 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8669463548746698541, guid: bcffa29b3e580af42bb687a2458b6b20, type: 3}

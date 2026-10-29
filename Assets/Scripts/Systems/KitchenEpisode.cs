@@ -15,7 +15,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField] private Rigidbody toyPrefab;
     [SerializeField] private Transform toyLanding;
     [SerializeField] private Transform[] hidingRoute, windowReturnRoute, secondExitRoute;
-    [SerializeField] private Transform windowStaging, windowOutside, windowDeparture;
+    [SerializeField] private Transform windowStaging, windowOutside, windowDeparture, firstExteriorRetreat;
     [SerializeField] private GameObject hidingCue;
     [SerializeField] private int arrivalWaypoint = 19;
     [SerializeField, Min(0.1f)] private float hearingRange = 4.5f;
@@ -138,7 +138,7 @@ public sealed class KitchenEpisode : MonoBehaviour
         yield return firstAlien.Startle();
         yield return firstAlien.Travel(windowReturnRoute, true, true);
         yield return firstAlien.EscapeWindow(windowStaging, windowOutside, windowDeparture);
-        firstAlien.SetState(KitchenAlienState.Finished);
+        yield return firstAlien.RetreatExterior(firstExteriorRetreat);
         onFirstRetreated.Invoke();
         if (!secondEncounterReady) yield break;
         Step = KitchenEpisodeStep.SecondEncounter;
