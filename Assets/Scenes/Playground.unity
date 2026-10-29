@@ -1488,7 +1488,19 @@ MonoBehaviour:
   pitchRange: {x: 1, y: 1.35}
   onStateChanged:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 832575520}
+        m_TargetAssemblyTypeName: AbductionPostProcessing, Assembly-CSharp
+        m_MethodName: OnBeamStateChanged
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   onUncontrolled:
     m_PersistentCalls:
       m_Calls:
@@ -10508,7 +10520,7 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
+  m_RenderPostProcessing: 1
   m_Antialiasing: 0
   m_AntialiasingQuality: 2
   m_StopNaN: 0
@@ -26690,6 +26702,7 @@ GameObject:
   m_Component:
   - component: {fileID: 832575519}
   - component: {fileID: 832575518}
+  - component: {fileID: 832575520}
   m_Layer: 0
   m_Name: Global Volume
   m_TagString: Untagged
@@ -26729,6 +26742,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &832575520
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 832575517}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38476f12d0bb0e245aef44817fa26983, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalVolume: {fileID: 832575518}
+  beam: {fileID: 75071465}
+  transitionSeconds: 0.65
+  stable:
+    bloom: 0.22
+    contrast: 3
+    vignette: 0.16
+  affected:
+    bloom: 0.27
+    contrast: 4
+    vignette: 0.17
+  intense:
+    bloom: 0.34
+    contrast: 6
+    vignette: 0.19
+  uncontrolled:
+    bloom: 0.42
+    contrast: 8
+    vignette: 0.21
 --- !u!1 &834176065
 GameObject:
   m_ObjectHideFlags: 0
