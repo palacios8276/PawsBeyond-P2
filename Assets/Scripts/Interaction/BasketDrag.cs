@@ -5,7 +5,6 @@ public class BasketDrag : MonoBehaviour
 {
     [SerializeField] private float followStrength = 12f;
     [SerializeField] private float maxSpeed = 7f;
-    [SerializeField] private float breakDistance = 4f;
     [SerializeField] private float carryHeight = 0.55f;
 
     private Rigidbody body;
@@ -14,6 +13,7 @@ public class BasketDrag : MonoBehaviour
     private bool useExactGrip;
     private Collider[] playerColliders;
     private Collider[] basketColliders;
+    private CollisionDetectionMode previousCollisionMode;
     public bool IsHeld => holder != null;
     public bool HasBeenDragged { get; private set; }
 
@@ -38,6 +38,8 @@ public class BasketDrag : MonoBehaviour
         localGrip = useExactGrip ? Vector3.zero : player.InverseTransformPoint(body.position);
         playerColliders = player.GetComponentsInChildren<Collider>();
         SetPlayerCollisions(true);
+        previousCollisionMode = body.collisionDetectionMode;
+        body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         HasBeenDragged = true;
         return true;
     }
@@ -45,6 +47,7 @@ public class BasketDrag : MonoBehaviour
     public void Release()
     {
         SetPlayerCollisions(false);
+        if (body) body.collisionDetectionMode = previousCollisionMode;
         holder = null;
         useExactGrip = false;
         playerColliders = null;
@@ -64,12 +67,8 @@ public class BasketDrag : MonoBehaviour
         Vector3 target = useExactGrip ? holder.position : holder.TransformPoint(localGrip);
         if (!useExactGrip) target.y = holder.position.y + carryHeight;
         Vector3 delta = target - body.position;
-        if (delta.sqrMagnitude > breakDistance * breakDistance)
-        {
-            Release();
-            return;
-        }
-        // Lift smoothly over the rim with forces; never teleport the garment.
+        // Los contactos pueden retrasar el objeto, pero solo Interact debe soltarlo.
+        // La velocidad limitada y ContinuousDynamic conservan paredes y muebles sólidos.
         Vector3 velocity = Vector3.ClampMagnitude(delta * followStrength, maxSpeed);
         Vector3 current = body.linearVelocity;
         body.AddForce((velocity - current) * followStrength - Physics.gravity,

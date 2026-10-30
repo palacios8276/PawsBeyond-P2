@@ -18,7 +18,8 @@ public class PlayerInteraction : MonoBehaviour
     private PlayerInputActions inputActions;
     private BasketDrag heldBasket;
     private readonly Collider[] candidates = new Collider[32];
-    private readonly HashSet<BasketDrag> inspected = new HashSet<BasketDrag>();
+    private readonly Dictionary<BasketDrag, Vector3> candidatePoints = new Dictionary<BasketDrag, Vector3>();
+    private readonly RaycastHit[] obstructionHits = new RaycastHit[16];
     [SerializeField] private DragObjectEvent onObjectGrabbed = new DragObjectEvent();
     [SerializeField] private DragObjectEvent onObjectReleased = new DragObjectEvent();
     public DragObjectEvent OnObjectGrabbed => onObjectGrabbed;
@@ -75,7 +76,7 @@ public class PlayerInteraction : MonoBehaviour
             interactionReach * interactionReach * 0.25f);
         int count = Physics.OverlapSphereNonAlloc(center, searchRadius, candidates,
             interactableMask, QueryTriggerInteraction.Ignore);
-        inspected.Clear();
+        candidatePoints.Clear();
         float closestDistance = float.PositiveInfinity;
         float minimumDot = Mathf.Cos(interactionAngle * 0.5f * Mathf.Deg2Rad);
 
@@ -84,7 +85,7 @@ public class PlayerInteraction : MonoBehaviour
             Collider candidateCollider = candidates[i];
             if (!candidateCollider) continue;
             BasketDrag candidate = candidateCollider.GetComponentInParent<BasketDrag>();
-            if (!candidate || candidate.IsHeld || !inspected.Add(candidate)) continue;
+            if (!candidate || candidate.IsHeld) continue;
 
             Vector3 point = candidateCollider.ClosestPoint(origin);
             Vector3 delta = point - origin;
@@ -94,12 +95,19 @@ public class PlayerInteraction : MonoBehaviour
             Vector3 lateral = delta - forward * forwardDistance;
             if (lateral.sqrMagnitude > interactionRadius * interactionRadius) continue;
             if (delta.sqrMagnitude > 0.0001f && Vector3.Dot(delta.normalized, forward) < minimumDot) continue;
-            if (IsOccluded(candidate, point)) continue;
+            if (!candidatePoints.TryGetValue(candidate, out Vector3 previous) ||
+                delta.sqrMagnitude < (previous - origin).sqrMagnitude)
+                candidatePoints[candidate] = point;
+        }
 
+        foreach (var entry in candidatePoints)
+        {
+            Vector3 delta = entry.Value - origin;
+            if (delta.sqrMagnitude < 0.0001f) delta = entry.Key.transform.position - origin;
             float distance = delta.sqrMagnitude;
-            if (distance >= closestDistance) continue;
+            if (distance >= closestDistance || IsOccluded(entry.Key, entry.Value)) continue;
             closestDistance = distance;
-            LastCandidate = candidate;
+            LastCandidate = entry.Key;
         }
 
         return LastCandidate;
@@ -111,9 +119,23 @@ public class PlayerInteraction : MonoBehaviour
         Vector3 delta = point - origin;
         float distance = delta.magnitude;
         if (distance < 0.001f) return false;
-        if (!Physics.Raycast(origin, delta / distance, out RaycastHit hit, distance + 0.02f,
-            obstacleMask, QueryTriggerInteraction.Ignore)) return false;
-        return hit.collider.GetComponentInParent<BasketDrag>() != candidate;
+        int count = Physics.RaycastNonAlloc(origin, delta / distance, obstructionHits,
+            distance + 0.02f, obstacleMask, QueryTriggerInteraction.Ignore);
+        if (count == 0) return false;
+        System.Array.Sort(obstructionHits, 0, count, RaycastHitDistanceComparer.Instance);
+        for (int i = 0; i < count; i++)
+        {
+            Collider hit = obstructionHits[i].collider;
+            if (!hit || hit.transform.IsChildOf(transform)) continue;
+            return hit.GetComponentInParent<BasketDrag>() != candidate;
+        }
+        return false;
+    }
+
+    private sealed class RaycastHitDistanceComparer : IComparer<RaycastHit>
+    {
+        public static readonly RaycastHitDistanceComparer Instance = new RaycastHitDistanceComparer();
+        public int Compare(RaycastHit a, RaycastHit b) => a.distance.CompareTo(b.distance);
     }
 
     private void OnDrawGizmosSelected()
