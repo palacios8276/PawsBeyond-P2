@@ -63,6 +63,9 @@ public sealed class AbductionPresentation : MonoBehaviour
     [SerializeField, Min(0f)] private float windowIntensity = 5f, shipLightIntensity = 1.5f;
     [SerializeField, Min(0.1f)] private float barkFeedbackSeconds = 0.45f;
     [SerializeField, Range(0f, 0.5f)] private float barkFeedbackGain = 0.45f;
+    [SerializeField, Range(0f, 0.8f)] private float barkWidthKick = 0.55f;
+    [SerializeField, Range(0f, 0.2f)] private float barkLateralKick = 0.12f;
+    [SerializeField] private Color barkResponseColor = new Color(1f, 0.85f, 0.45f, 0.6f);
     [Header("Estados: mismo orden que AbductionBeamState")]
     [SerializeField] private BeamPresentationStyle[] styles =
     {
@@ -126,6 +129,8 @@ public sealed class AbductionPresentation : MonoBehaviour
         if (beam) beam.InterferenceAccepted.AddListener(OnInterferenceAccepted);
     }
 
+    public float BarkFeedback => beam && beam.IsBeamActive
+        ? Mathf.Clamp01(1f - (Time.time - acceptedBarkAt) / Mathf.Max(0.1f, barkFeedbackSeconds)) : 0f;
     private void OnInterferenceAccepted() => acceptedBarkAt = Time.time;
 
     private void LateUpdate()
@@ -148,7 +153,7 @@ public sealed class AbductionPresentation : MonoBehaviour
         displayedColor = Color.Lerp(displayedColor, style.color, blend);
         float noise = Mathf.PerlinNoise(Time.time * 1.4f, 2.7f);
         float wave = 0.5f + 0.5f * Mathf.Sin(Time.time * style.pulseHz * Mathf.PI * 2f + noise * style.irregularity * 3f);
-        float feedback = Mathf.Clamp01(1f - (Time.time - acceptedBarkAt) / Mathf.Max(0.1f, barkFeedbackSeconds));
+        float feedback = BarkFeedback;
         // La envolvente visual es independiente del audio y de la interferencia jugable.
         float energy = Mathf.Clamp(1f - style.pulseDepth * (1f - wave) - noise * style.irregularity * 0.1f
             + feedback * barkFeedbackGain, 0.18f, 1.4f);
@@ -219,13 +224,14 @@ public sealed class AbductionPresentation : MonoBehaviour
         {
             Vector3 side = Vector3.Cross((to - from).normalized, Vector3.up).normalized;
             float wobble = (Mathf.PerlinNoise(Time.time * 1.7f, 6.2f) * 2f - 1f) * style.lateralWobble;
+            wobble += feedback * barkLateralKick * Mathf.Lerp(0.75f, 1.25f, (int)beam.CurrentState / 3f);
             line.SetPosition(1, Vector3.Lerp(from, to, 0.28f) + side * wobble * 0.4f);
             line.SetPosition(2, Vector3.Lerp(from, to, 0.68f) - side * wobble);
         }
         // La boca de la ventana permanece estrecha; el extremo interior expresa la inestabilidad.
         line.startWidth = interior ? 0.32f : width * 0.5f;
-        line.endWidth = interior ? width * (1f + style.widthVariation * (wave * 2f - 1f) + feedback * 0.25f) : width;
-        var color = displayedColor;
+        line.endWidth = interior ? width * (1f + style.widthVariation * (wave * 2f - 1f) + feedback * barkWidthKick) : width;
+        var color = Color.Lerp(displayedColor, barkResponseColor, feedback * 0.45f);
         color.a = Mathf.Min(0.78f, color.a * weight * energy * (interior ? interiorPresence : 1f));
         line.startColor = color; line.endColor = color;
         beamBlock.Clear(); beamBlock.SetTexture("_BaseMap", style.texture);
@@ -249,8 +255,8 @@ public sealed class AbductionPresentation : MonoBehaviour
         // Volumen contenido y recto: no apunta al techo, no tira de los dueños y no zigzaguea en el baño.
         for (int i = 0; i < 5; i++)
             accompanyingBeam.SetPosition(i, center + Vector3.up * accompanyingHeight * (0.5f - i / 4f));
-        accompanyingBeam.widthMultiplier = accompanyingWidth * (1f + feedback * 0.08f);
-        Color color = displayedColor;
+        accompanyingBeam.widthMultiplier = accompanyingWidth * (1f + feedback * barkWidthKick * 0.45f);
+        Color color = Color.Lerp(displayedColor, barkResponseColor, feedback * 0.45f);
         color.a *= weight * accompanyingOpacity * (0.92f + wave * 0.08f + feedback * 0.12f);
         beamBlock.Clear(); beamBlock.SetColor("_BaseColor", color);
         // Conserva una base continua entre acontecimientos, aun si el estado crítico fragmenta el enlace de ventana.
