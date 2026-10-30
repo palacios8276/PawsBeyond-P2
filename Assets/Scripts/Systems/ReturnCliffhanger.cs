@@ -25,28 +25,73 @@ public sealed class ReturnCliffhanger : MonoBehaviour
     [SerializeField] private UnityEvent onFigureRevealed = new UnityEvent();
     [SerializeField] private UnityEvent onContinueShown = new UnityEvent();
     private BoxCollider zone;
+    private bool playerInside, ownersArrived, closingRequested;
     public int TriggerCount { get; private set; }
     public bool IsComplete { get; private set; }
     public bool IsEligible => progression.CurrentEpisode == NarrativeEpisode.ReturnAndClosing
-        && kitchen.Step == KitchenEpisodeStep.Complete && journey.CurrentWaypoint >= bedroomArrivalWaypoint
-        && journey.transform.position.x < -13.5f;
+        && kitchen.Step == KitchenEpisodeStep.Complete && ownersArrived;
     private void Awake()
     {
         zone = GetComponent<BoxCollider>();
+        ownersArrived = journey && journey.HasReachedWaypoint(bedroomArrivalWaypoint);
+        playerInside = PlayerIsInside();
         if (glow) glow.intensity = 0;
         if (partialFigure) partialFigure.SetActive(false);
         if (blackScreen) blackScreen.alpha = 0;
         if (closingText) closingText.alpha = 0;
     }
+    private void OnEnable()
+    {
+        if (journey) journey.WaypointReached += OnWaypointReached;
+    }
+    private void OnDisable()
+    {
+        if (journey) journey.WaypointReached -= OnWaypointReached;
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!IsPlayer(other)) return;
+        playerInside = true;
+        TryRequestClosing();
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (IsPlayer(other)) playerInside = false;
+    }
+    private bool IsPlayer(Collider other)
+    {
+        if (!other || !player) return false;
+        CharacterController controller = other.GetComponentInParent<CharacterController>();
+        return controller && controller.transform == player;
+    }
+    private bool PlayerIsInside()
+    {
+        return zone && player && zone.bounds.Contains(player.position + Vector3.up * 0.3f);
+    }
+    private void OnWaypointReached(int index)
+    {
+        if (index < bedroomArrivalWaypoint) return;
+        ownersArrived = true;
+        TryRequestClosing();
+    }
     private void Update()
     {
-        // Revalidar la posición permite llegar antes o después de los dueños.
-        if (TriggerCount == 0 && IsEligible && zone.bounds.Contains(player.position + Vector3.up * 0.3f))
-            progression.RequestClosing();
+        // El chequeo geométrico cubre al perro que ya estaba dentro antes del evento de llegada.
+        playerInside = PlayerIsInside();
+        if (!ownersArrived && journey && journey.HasReachedWaypoint(bedroomArrivalWaypoint))
+            ownersArrived = true;
+        TryRequestClosing();
+    }
+    private void TryRequestClosing()
+    {
+        if (closingRequested || TriggerCount != 0 || !playerInside || !IsEligible) return;
+        closingRequested = true;
+        progression.RequestClosing();
     }
     public void BeginClosing()
     {
-        if (TriggerCount != 0 || !IsEligible || !zone.bounds.Contains(player.position + Vector3.up * 0.3f)) return;
+        if (TriggerCount != 0 || !IsEligible || !PlayerIsInside()) return;
+        closingRequested = true;
         TriggerCount++;
         StartCoroutine(Present());
     }

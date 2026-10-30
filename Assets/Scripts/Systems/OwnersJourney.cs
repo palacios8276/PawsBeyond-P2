@@ -5,6 +5,7 @@ using UnityEngine.Events;
 
 public class OwnersJourney : MonoBehaviour
 {
+    public event System.Action<int> WaypointReached;
     [SerializeField] private Transform[] waypoints;
     [SerializeField] private Renderer[] owners;
     [SerializeField] private Camera viewingCamera;
@@ -42,6 +43,8 @@ public class OwnersJourney : MonoBehaviour
     public bool HasStarted { get; private set; }
     public bool IsComplete => HasStarted && next >= waypoints.Length;
     public int CurrentWaypoint => next;
+    public int LastReachedWaypoint { get; private set; } = -1;
+    public bool HasReachedWaypoint(int index) => LastReachedWaypoint >= index;
     public bool WaitingForBathroom => HasStarted && !bathroomPuzzle.IsSolved
         && ((next == bathroomStop && Vector3.Distance(transform.position, waypoints[next].position) < 0.02f)
             || (next == bathroomCrossing && bathroomPuzzle.IsActivated));
@@ -118,7 +121,9 @@ public class OwnersJourney : MonoBehaviour
             if (!bathroomPuzzle.IsSolved) return;
         }
         if (next == bathroomExit && bathroomEntered) onBathroomExited.Invoke();
+        LastReachedWaypoint = next;
         onWaypointReached.Invoke(next);
+        WaypointReached?.Invoke(next);
         next++;
     }
 
