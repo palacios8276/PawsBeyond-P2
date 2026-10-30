@@ -11,6 +11,7 @@ public class BasketDrag : MonoBehaviour
     private Rigidbody body;
     private Transform holder;
     private Vector3 localGrip;
+    private bool useExactGrip;
     private Collider[] playerColliders;
     private Collider[] basketColliders;
     public bool IsHeld => holder != null;
@@ -24,11 +25,17 @@ public class BasketDrag : MonoBehaviour
 
     public bool Grab(Transform player)
     {
+        return Grab(player, null);
+    }
+
+    public bool Grab(Transform player, Transform grip)
+    {
         if (body.isKinematic || IsHeld) return false;
         // Pulling frees clothes snagged in the doorway.
         body.constraints &= ~(RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ);
-        holder = player;
-        localGrip = player.InverseTransformPoint(body.position);
+        holder = grip ? grip : player;
+        useExactGrip = grip;
+        localGrip = useExactGrip ? Vector3.zero : player.InverseTransformPoint(body.position);
         playerColliders = player.GetComponentsInChildren<Collider>();
         SetPlayerCollisions(true);
         HasBeenDragged = true;
@@ -39,6 +46,7 @@ public class BasketDrag : MonoBehaviour
     {
         SetPlayerCollisions(false);
         holder = null;
+        useExactGrip = false;
         playerColliders = null;
     }
 
@@ -53,8 +61,8 @@ public class BasketDrag : MonoBehaviour
     private void FixedUpdate()
     {
         if (!holder) return;
-        Vector3 target = holder.TransformPoint(localGrip);
-        target.y = holder.position.y + carryHeight;
+        Vector3 target = useExactGrip ? holder.position : holder.TransformPoint(localGrip);
+        if (!useExactGrip) target.y = holder.position.y + carryHeight;
         Vector3 delta = target - body.position;
         if (delta.sqrMagnitude > breakDistance * breakDistance)
         {

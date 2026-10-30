@@ -1674,7 +1674,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de1ffc87826b3e74297c5c47ca39a1ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  interactionDistance: 2.3
+  interactionReach: 1
+  interactionRadius: 0.55
+  interactionAngle: 100
+  interactableMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   interactionOrigin: {fileID: 1779736043}
   onObjectGrabbed:
     m_PersistentCalls:
@@ -55331,7 +55339,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1779736043}
   m_Layer: 0
-  m_Name: InteractionOrigin
+  m_Name: MuzzleInteractionPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
