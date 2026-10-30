@@ -105,12 +105,14 @@ public sealed class KitchenAlien : MonoBehaviour
         }
     }
 
-    public IEnumerator EscapeWindow(Transform staging, Transform outside, Transform departure)
+    public IEnumerator EscapeWindow(Transform staging, Transform outside, Transform departure,
+        Collider passageBlocker = null)
     {
         SetState(KitchenAlienState.Crawling);
         float height = controller.height;
         Vector3 center = controller.center;
         float step = controller.stepOffset;
+        if (passageBlocker) Physics.IgnoreCollision(controller, passageBlocker, true);
         controller.height = 0.7f; controller.center = Vector3.up * 0.35f; controller.stepOffset = 0.1f;
         visual.localScale = new Vector3(1f, 0.55f, 1f);
         foreach (var target in new[] { staging, outside, departure })
@@ -126,6 +128,7 @@ public sealed class KitchenAlien : MonoBehaviour
         }
         visual.localScale = Vector3.one;
         controller.height = height; controller.center = center; controller.stepOffset = step;
+        if (passageBlocker) Physics.IgnoreCollision(controller, passageBlocker, false);
     }
 
     public IEnumerator RetreatExterior(Transform destination)

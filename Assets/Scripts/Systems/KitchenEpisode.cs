@@ -16,6 +16,10 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField] private Transform toyLanding;
     [SerializeField] private Transform[] hidingRoute, windowReturnRoute, secondExitRoute;
     [SerializeField] private Transform windowStaging, windowOutside, windowDeparture, firstExteriorRetreat;
+    [Header("Salida final de B por la ventana funcional de sala")]
+    [SerializeField] private Transform secondWindowStaging, secondWindowOutside, secondWindowDeparture;
+    [SerializeField] private Transform secondExteriorRetreat;
+    [SerializeField] private Collider secondWindowGlass;
     [SerializeField] private GameObject hidingCue;
     [SerializeField] private int arrivalWaypoint = 19;
     [SerializeField, Min(0.1f)] private float hearingRange = 4.5f;
@@ -45,6 +49,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     public int CurrentBarkCount => currentBarkCount;
     public int BarksRequired => Mathf.Max(1, Step == KitchenEpisodeStep.FirstHidden ? hiddenEncounterBarks
         : Step == KitchenEpisodeStep.Repairing ? repairBarks : firstEncounterBarks);
+    public bool SecondAlienGone => secondAlien && !secondAlien.gameObject.activeSelf;
     public KitchenAlien ActiveAlien => Step == KitchenEpisodeStep.FirstEncounter || Step == KitchenEpisodeStep.FirstHidden ? firstAlien
         : Step == KitchenEpisodeStep.SecondEncounter || Step == KitchenEpisodeStep.Repairing ? secondAlien : null;
 
@@ -155,7 +160,19 @@ public sealed class KitchenEpisode : MonoBehaviour
         onRepairInterrupted.Invoke();
         yield return secondAlien.Startle();
         yield return secondAlien.Travel(secondExitRoute, true, true);
-        secondAlien.SetState(KitchenAlienState.Finished);
+        if (secondWindowStaging && secondWindowOutside && secondWindowDeparture &&
+            secondExteriorRetreat && secondWindowGlass)
+        {
+            yield return secondAlien.EscapeWindow(secondWindowStaging, secondWindowOutside,
+                secondWindowDeparture, secondWindowGlass);
+            yield return secondAlien.RetreatExterior(secondExteriorRetreat);
+        }
+        else
+        {
+            // Contingencia segura: nunca dejar al operador visible si falta una referencia de escena.
+            secondAlien.SetState(KitchenAlienState.Finished);
+            secondAlien.gameObject.SetActive(false);
+        }
         Step = KitchenEpisodeStep.Complete;
         CompletionCount++;
         beam.SetInteractionFocus(null);
