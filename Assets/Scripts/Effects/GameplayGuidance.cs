@@ -115,7 +115,8 @@ public sealed class GameplayGuidance : MonoBehaviour
     private void Tell(string id, string heading, string body, ControlHint hint = ControlHint.None,
         int priority = 2, bool remindable = true)
     {
-        if (closing || !isActiveAndEnabled || !noticeGroup || !title || !detail || shown.Contains(id)) return;
+        string noticeKey = NoticeKey(id, context);
+        if (closing || !isActiveAndEnabled || !noticeGroup || !title || !detail || shown.Contains(noticeKey)) return;
         if (pending.Exists(x => x.id == id)) return;
         var notice = new Notice
         {
@@ -143,8 +144,9 @@ public sealed class GameplayGuidance : MonoBehaviour
             pending.Sort((a, b) => b.priority.CompareTo(a.priority));
             Notice next = pending[0];
             pending.RemoveAt(0);
-            if (next.context != context || shown.Contains(next.id)) continue;
-            shown.Add(next.id);
+            string noticeKey = NoticeKey(next.id, next.context);
+            if (next.context != context || shown.Contains(noticeKey)) continue;
+            shown.Add(noticeKey);
             PresentedCount++;
             yield return Show(next, initialDuration, false);
         }
@@ -273,6 +275,8 @@ public sealed class GameplayGuidance : MonoBehaviour
         return identity.Contains("playstation") || identity.Contains("dualshock") ||
             identity.Contains("dualsense") || identity.Contains("wireless controller");
     }
+
+    private static string NoticeKey(string id, int noticeContext) => id + "@" + noticeContext;
 
     public void PresentTutorialStep(BedroomTutorialStep step)
     {
