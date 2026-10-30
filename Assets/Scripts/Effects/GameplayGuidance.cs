@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.DualShock;
 using UnityEngine.Serialization;
 
 // Presentación local del Canvas existente: recibe hechos del juego, nunca lo hace avanzar.
 public sealed class GameplayGuidance : MonoBehaviour
 {
     private enum ControlHint { None, Move, Look, Interact, Bark }
-    private enum DeviceMode { KeyboardMouse, PlayStation, GenericGamepad }
 
     [Header("Panel existente y jerarquía de lectura")]
     [SerializeField] private CanvasGroup noticeGroup;
@@ -43,14 +41,13 @@ public sealed class GameplayGuidance : MonoBehaviour
     private readonly HashSet<string> shown = new HashSet<string>();
     private Coroutine presentation;
     private Notice currentNotice, reminder;
-    private DeviceMode activeDevice = DeviceMode.KeyboardMouse;
     private int context;
     private bool closing, presentingReminder;
     private float lastActivityAt, nextReminderAt;
 
     public string CurrentNoticeId { get; private set; }
     public string CurrentObjective => reminder != null ? reminder.heading : "";
-    public string ActiveDeviceLabel => activeDevice.ToString();
+    public string ActiveDeviceLabel => "Keyboard+PlayStation";
     public int PresentedCount { get; private set; }
 
     private void Awake()
@@ -81,13 +78,6 @@ public sealed class GameplayGuidance : MonoBehaviour
 
     private void Update()
     {
-        DeviceMode? detected = DetectActiveDevice();
-        if (detected.HasValue && detected.Value != activeDevice)
-        {
-            activeDevice = detected.Value;
-            RefreshVisibleText();
-        }
-
         bool meaningfulActivity = HasMeaningfulActivity();
         if (meaningfulActivity)
         {
@@ -213,30 +203,11 @@ public sealed class GameplayGuidance : MonoBehaviour
     private string ControlSuffix(ControlHint hint)
     {
         if (hint == ControlHint.None) return "";
-        if (activeDevice == DeviceMode.KeyboardMouse)
-        {
-            if (hint == ControlHint.Move) return " — WASD";
-            if (hint == ControlHint.Look) return " — mouse";
-            if (hint == ControlHint.Interact) return " — E";
-            return " — B";
-        }
-        if (hint == ControlHint.Move) return " — stick izquierdo";
-        if (hint == ControlHint.Look) return " — stick derecho";
-        if (activeDevice == DeviceMode.PlayStation)
-            return hint == ControlHint.Interact ? " — ✕" : " — □";
-        return hint == ControlHint.Interact ? " — botón sur" : " — botón oeste";
-    }
-
-    private DeviceMode? DetectActiveDevice()
-    {
-        DeviceMode? detected = null;
-        if (KeyboardMouseWasUsed()) detected = DeviceMode.KeyboardMouse;
-        foreach (Gamepad gamepad in Gamepad.all)
-        {
-            if (!GamepadWasUsed(gamepad)) continue;
-            detected = IsPlayStation(gamepad) ? DeviceMode.PlayStation : DeviceMode.GenericGamepad;
-        }
-        return detected;
+        if (hint == ControlHint.Move) return "\nWASD (teclado) / stick izquierdo (PlayStation)";
+        if (hint == ControlHint.Look) return "\nMouse (teclado) / stick derecho (PlayStation)";
+        // LiberationSans no contiene U+2715. La X ASCII identifica el mismo botón sin warnings TMP.
+        if (hint == ControlHint.Interact) return "\nE (teclado) / X (PlayStation)";
+        return "\nB (teclado) / □ (PlayStation)";
     }
 
     private bool HasMeaningfulActivity()
@@ -265,15 +236,6 @@ public sealed class GameplayGuidance : MonoBehaviour
         return gamepad.leftStick.ReadValue().sqrMagnitude > thresholdSquared ||
             gamepad.rightStick.ReadValue().sqrMagnitude > thresholdSquared ||
             gamepad.buttonSouth.wasPressedThisFrame || gamepad.buttonWest.wasPressedThisFrame;
-    }
-
-    private static bool IsPlayStation(Gamepad gamepad)
-    {
-        if (gamepad is DualShockGamepad) return true;
-        string identity = ((gamepad.description.manufacturer ?? "") + " " +
-            (gamepad.description.product ?? "")).ToLowerInvariant();
-        return identity.Contains("playstation") || identity.Contains("dualshock") ||
-            identity.Contains("dualsense") || identity.Contains("wireless controller");
     }
 
     private static string NoticeKey(string id, int noticeContext) => id + "@" + noticeContext;
