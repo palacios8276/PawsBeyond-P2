@@ -29934,8 +29934,8 @@ HingeJoint:
   m_ConnectedAnchor: {x: 0, y: 0, z: 0}
   m_UseSpring: 1
   m_Spring:
-    spring: 60
-    damper: 14
+    spring: 85
+    damper: 18
     targetPosition: 0
   m_UseMotor: 0
   m_Motor:
@@ -29946,8 +29946,8 @@ HingeJoint:
   m_ExtendedLimits: 0
   m_UseAcceleration: 0
   m_Limits:
-    min: -100
-    max: 0
+    min: -78
+    max: 78
     bounciness: 0
     bounceMinVelocity: 0
     contactDistance: 1
@@ -29982,7 +29982,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 1
-  m_Constraints: 0
+  m_Constraints: 80
   m_CollisionDetection: 3
 --- !u!1 &914168322
 GameObject:
@@ -57040,7 +57040,7 @@ MonoBehaviour:
   accident: {fileID: 1828542574}
   basketImpact: {fileID: 1496392253}
   solvedAudio: {fileID: 1376273040}
-  laundrySlideOffset: {x: 0, y: 0, z: -1.8}
+  laundrySlideOffset: {x: 0, y: 0, z: -2.6}
   laundrySlideSeconds: 0.55
   basketParkingPath:
   - {fileID: 671324293}
@@ -65145,7 +65145,10 @@ MonoBehaviour:
   doorHinge: {fileID: 913234708}
   openTarget: -95
   closedTarget: 0
-  closingDelay: 0.6
+  closingDelay: 0.9
+  bidirectionalOpening: 1
+  bidirectionalAngle: 78
+  sideDeadZone: 0.15
   allowedPlayer: {fileID: 75761113}
 --- !u!65 &1891023075
 BoxCollider:
@@ -65166,7 +65169,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.599999, y: 2.6, z: 3}
+  m_Size: {x: 6, y: 2.6, z: 4.5}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!54 &1891023076
 Rigidbody:
@@ -71580,7 +71583,7 @@ Transform:
   m_GameObject: {fileID: 2101931008}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 16.3, y: 1.34, z: 2.3500004}
+  m_LocalPosition: {x: 16.3, y: 1.34, z: 3.1500006}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -76858,6 +76861,9 @@ MonoBehaviour:
   openTarget: -95
   closedTarget: 0
   closingDelay: 0.6
+  bidirectionalOpening: 0
+  bidirectionalAngle: 78
+  sideDeadZone: 0.15
   allowedPlayer: {fileID: 75761113}
 --- !u!54 &2132809716
 Rigidbody:
@@ -77365,7 +77371,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2999858859736087077, guid: ad472d9a801c1a043a41dc32c6e5eca2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2.25
+      value: 3.05
       objectReference: {fileID: 0}
     - target: {fileID: 2999858859736087077, guid: ad472d9a801c1a043a41dc32c6e5eca2, type: 3}
       propertyPath: m_LocalRotation.w

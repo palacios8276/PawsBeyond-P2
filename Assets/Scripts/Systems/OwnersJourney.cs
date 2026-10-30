@@ -100,7 +100,8 @@ public class OwnersJourney : MonoBehaviour
         bool crossingBedroom = next == bedroomCrossing || returningBedroom && next <= returnBedroomCrossing;
         bedroomTrigger.RequestNarrativeOpening(next == bedroomCrossing || returningBedroom);
         bool bathroomBlocked = next == bathroomCrossing && bathroomPuzzle.IsActivated && !bathroomPuzzle.IsSolved;
-        bathroomTrigger.RequestNarrativeOpening((next == bathroomCrossing || next == bathroomExit) && !bathroomBlocked);
+        bool bathroomOpening = (next == bathroomCrossing || next == bathroomExit) && !bathroomBlocked;
+        bathroomTrigger.RequestNarrativeOpening(bathroomOpening, transform.position);
         if (crossingBedroom)
         {
             if (Mathf.Abs(bedroomDoor.angle) < 75f || returningBedroom && float.IsNaN(bedroomDoor.angle)) return;
