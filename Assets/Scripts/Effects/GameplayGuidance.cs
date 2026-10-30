@@ -2,10 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.DualShock;
+using UnityEngine.Serialization;
 
 // Presentación local del Canvas existente: recibe hechos del juego, nunca lo hace avanzar.
 public sealed class GameplayGuidance : MonoBehaviour
 {
+    private enum ControlHint { None, Move, Look, Interact, Bark }
+    private enum DeviceMode { KeyboardMouse, PlayStation, GenericGamepad }
+
     [Header("Panel existente y jerarquía de lectura")]
     [SerializeField] private CanvasGroup noticeGroup;
     [SerializeField] private TMP_Text title, detail, objective;
@@ -17,212 +23,406 @@ public sealed class GameplayGuidance : MonoBehaviour
     [SerializeField] private AbductionBeamController beam;
     [SerializeField] private BathroomBasketDrop bathroom;
     [Header("Lectura y transición")]
-    [SerializeField, Min(1f)] private float minimumReadSeconds = 3f;
-    [SerializeField, Min(1f)] private float noticeSeconds = 7f;
+    [SerializeField, FormerlySerializedAs("minimumReadSeconds"), Min(1f)] private float initialDuration = 3f;
+    [SerializeField, Min(1f)] private float inactivitySeconds = 2.5f;
+    [SerializeField, Min(1f)] private float reminderDuration = 2.5f;
     [SerializeField, Range(0.1f, 0.5f)] private float fadeSeconds = 0.2f;
+    [SerializeField, Min(1f)] private float reminderRepeatInterval = 8f;
+    [SerializeField, Range(0.05f, 0.9f)] private float movementThreshold = 0.25f;
+    [SerializeField, Min(0.1f)] private float pointerDeltaThreshold = 0.8f;
+
     private sealed class Notice
     {
         public string id, heading, body;
         public int context, priority;
+        public ControlHint controlHint;
+        public bool remindable;
     }
+
     private readonly List<Notice> pending = new List<Notice>();
     private readonly HashSet<string> shown = new HashSet<string>();
     private Coroutine presentation;
+    private Notice currentNotice, reminder;
+    private DeviceMode activeDevice = DeviceMode.KeyboardMouse;
     private int context;
-    private bool closing;
+    private bool closing, presentingReminder;
+    private float lastActivityAt, nextReminderAt;
+
     public string CurrentNoticeId { get; private set; }
-    public string CurrentObjective => objective ? objective.text : "";
+    public string CurrentObjective => reminder != null ? reminder.heading : "";
+    public string ActiveDeviceLabel => activeDevice.ToString();
     public int PresentedCount { get; private set; }
 
     private void Awake()
     {
-        if (noticeGroup) { noticeGroup.alpha = 0f; noticeGroup.blocksRaycasts = false; noticeGroup.interactable = false; }
+        if (noticeGroup)
+        {
+            noticeGroup.alpha = 0f;
+            noticeGroup.blocksRaycasts = false;
+            noticeGroup.interactable = false;
+        }
+        if (objective)
+        {
+            objective.text = "";
+            objective.gameObject.SetActive(false);
+        }
+        lastActivityAt = Time.unscaledTime;
     }
 
     private void OnEnable()
     {
         if (beam) beam.InterferenceAccepted.AddListener(OnInterferenceAccepted);
-        if (bathroom) { bathroom.AccidentStarted += OnBathroomAccident; bathroom.ClothesReady += OnClothesReady; }
+        if (bathroom)
+        {
+            bathroom.AccidentStarted += OnBathroomAccident;
+            bathroom.ClothesReady += OnClothesReady;
+        }
     }
 
-    private void SetObjective(string text)
+    private void Update()
     {
-        if (!objective || closing || objective.text == text) return;
-        objective.text = text;
-        context++;
-        pending.Clear(); // Una instrucción pendiente de una etapa anterior ya no es pertinente.
+        DeviceMode? detected = DetectActiveDevice();
+        if (detected.HasValue && detected.Value != activeDevice)
+        {
+            activeDevice = detected.Value;
+            RefreshVisibleText();
+        }
+
+        bool meaningfulActivity = HasMeaningfulActivity();
+        if (meaningfulActivity)
+        {
+            lastActivityAt = Time.unscaledTime;
+            nextReminderAt = Mathf.Max(nextReminderAt, lastActivityAt + inactivitySeconds);
+            if (presentingReminder) StopPresentation();
+        }
+
+        if (closing || presentation != null || reminder == null || pending.Count > 0) return;
+        float now = Time.unscaledTime;
+        if (now - lastActivityAt < inactivitySeconds || now < nextReminderAt) return;
+        nextReminderAt = now + reminderRepeatInterval;
+        presentation = StartCoroutine(PresentReminder(reminder));
     }
 
-    private void Tell(string id, string heading, string body, int priority = 2)
+    private void ChangeContext()
+    {
+        if (closing) return;
+        context++;
+        pending.Clear();
+        reminder = null;
+        nextReminderAt = Time.unscaledTime + initialDuration + inactivitySeconds;
+    }
+
+    private void Tell(string id, string heading, string body, ControlHint hint = ControlHint.None,
+        int priority = 2, bool remindable = true)
     {
         if (closing || !isActiveAndEnabled || !noticeGroup || !title || !detail || shown.Contains(id)) return;
         if (pending.Exists(x => x.id == id)) return;
-        pending.Add(new Notice { id = id, heading = heading, body = body, context = context, priority = priority });
-        if (presentation == null) presentation = StartCoroutine(Present());
+        var notice = new Notice
+        {
+            id = id,
+            heading = heading,
+            body = body,
+            context = context,
+            priority = priority,
+            controlHint = hint,
+            remindable = remindable
+        };
+        pending.Add(notice);
+        if (remindable)
+        {
+            reminder = notice;
+            nextReminderAt = Time.unscaledTime + initialDuration + inactivitySeconds;
+        }
+        if (presentation == null) presentation = StartCoroutine(PresentQueued());
     }
 
-    private IEnumerator Present()
+    private IEnumerator PresentQueued()
     {
         while (pending.Count > 0)
         {
             pending.Sort((a, b) => b.priority.CompareTo(a.priority));
-            Notice next = pending[0]; pending.RemoveAt(0);
+            Notice next = pending[0];
+            pending.RemoveAt(0);
             if (next.context != context || shown.Contains(next.id)) continue;
             shown.Add(next.id);
             PresentedCount++;
-            CurrentNoticeId = next.id;
-            title.text = next.heading; detail.text = next.body;
-            float elapsed = 0f;
-            float hold = Mathf.Max(minimumReadSeconds, noticeSeconds);
-            while (elapsed < hold)
-            {
-                // Se conserva un mínimo de lectura; luego se retira información que quedó obsoleta.
-                if (elapsed >= minimumReadSeconds && (next.context != context || pending.Count > 0)) break;
-                noticeGroup.alpha = Mathf.Clamp01(elapsed / fadeSeconds);
-                noticeRoot.localScale = Vector3.one * Mathf.Lerp(0.94f, 1f, Mathf.SmoothStep(0f, 1f, elapsed / fadeSeconds));
-                elapsed += Time.unscaledDeltaTime;
-                yield return null;
-            }
-            for (float t = 0f; t < fadeSeconds; t += Time.unscaledDeltaTime)
-            { noticeGroup.alpha = 1f - t / fadeSeconds; yield return null; }
-            noticeGroup.alpha = 0f;
-            CurrentNoticeId = null;
+            yield return Show(next, initialDuration, false);
         }
         presentation = null;
     }
 
+    private IEnumerator PresentReminder(Notice notice)
+    {
+        if (notice.context == context)
+        {
+            PresentedCount++;
+            yield return Show(notice, reminderDuration, true);
+        }
+        presentation = null;
+    }
+
+    private IEnumerator Show(Notice notice, float duration, bool isReminder)
+    {
+        currentNotice = notice;
+        presentingReminder = isReminder;
+        CurrentNoticeId = notice.id;
+        RefreshVisibleText();
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            if (notice.context != context || (!isReminder && pending.Count > 0)) break;
+            noticeGroup.alpha = Mathf.Clamp01(elapsed / fadeSeconds);
+            if (noticeRoot)
+                noticeRoot.localScale = Vector3.one * Mathf.Lerp(0.94f, 1f,
+                    Mathf.SmoothStep(0f, 1f, elapsed / fadeSeconds));
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+        for (float t = 0f; t < fadeSeconds; t += Time.unscaledDeltaTime)
+        {
+            noticeGroup.alpha = 1f - t / fadeSeconds;
+            yield return null;
+        }
+        HideNotice();
+    }
+
+    private void StopPresentation()
+    {
+        if (presentation != null) StopCoroutine(presentation);
+        presentation = null;
+        HideNotice();
+    }
+
+    private void HideNotice()
+    {
+        if (noticeGroup) noticeGroup.alpha = 0f;
+        currentNotice = null;
+        presentingReminder = false;
+        CurrentNoticeId = null;
+    }
+
+    private void RefreshVisibleText()
+    {
+        if (currentNotice == null) return;
+        title.text = currentNotice.heading;
+        detail.text = currentNotice.body + ControlSuffix(currentNotice.controlHint);
+    }
+
+    private string ControlSuffix(ControlHint hint)
+    {
+        if (hint == ControlHint.None) return "";
+        if (activeDevice == DeviceMode.KeyboardMouse)
+        {
+            if (hint == ControlHint.Move) return " — WASD";
+            if (hint == ControlHint.Look) return " — mouse";
+            if (hint == ControlHint.Interact) return " — E";
+            return " — B";
+        }
+        if (hint == ControlHint.Move) return " — stick izquierdo";
+        if (hint == ControlHint.Look) return " — stick derecho";
+        if (activeDevice == DeviceMode.PlayStation)
+            return hint == ControlHint.Interact ? " — ✕" : " — □";
+        return hint == ControlHint.Interact ? " — botón sur" : " — botón oeste";
+    }
+
+    private DeviceMode? DetectActiveDevice()
+    {
+        DeviceMode? detected = null;
+        if (KeyboardMouseWasUsed()) detected = DeviceMode.KeyboardMouse;
+        foreach (Gamepad gamepad in Gamepad.all)
+        {
+            if (!GamepadWasUsed(gamepad)) continue;
+            detected = IsPlayStation(gamepad) ? DeviceMode.PlayStation : DeviceMode.GenericGamepad;
+        }
+        return detected;
+    }
+
+    private bool HasMeaningfulActivity()
+    {
+        if (KeyboardMouseWasUsed()) return true;
+        foreach (Gamepad gamepad in Gamepad.all)
+            if (GamepadWasUsed(gamepad)) return true;
+        return false;
+    }
+
+    private bool KeyboardMouseWasUsed()
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null && (keyboard.wKey.isPressed || keyboard.aKey.isPressed ||
+            keyboard.sKey.isPressed || keyboard.dKey.isPressed || keyboard.eKey.wasPressedThisFrame ||
+            keyboard.bKey.wasPressedThisFrame)) return true;
+        Mouse mouse = Mouse.current;
+        return mouse != null && mouse.delta.ReadValue().sqrMagnitude >
+            pointerDeltaThreshold * pointerDeltaThreshold;
+    }
+
+    private bool GamepadWasUsed(Gamepad gamepad)
+    {
+        if (gamepad == null) return false;
+        float thresholdSquared = movementThreshold * movementThreshold;
+        return gamepad.leftStick.ReadValue().sqrMagnitude > thresholdSquared ||
+            gamepad.rightStick.ReadValue().sqrMagnitude > thresholdSquared ||
+            gamepad.buttonSouth.wasPressedThisFrame || gamepad.buttonWest.wasPressedThisFrame;
+    }
+
+    private static bool IsPlayStation(Gamepad gamepad)
+    {
+        if (gamepad is DualShockGamepad) return true;
+        string identity = ((gamepad.description.manufacturer ?? "") + " " +
+            (gamepad.description.product ?? "")).ToLowerInvariant();
+        return identity.Contains("playstation") || identity.Contains("dualshock") ||
+            identity.Contains("dualsense") || identity.Contains("wireless controller");
+    }
+
     public void PresentTutorialStep(BedroomTutorialStep step)
     {
+        ChangeContext();
         switch (step)
         {
             case BedroomTutorialStep.Move:
-                SetObjective("OBJETIVO: EXPLORÁ EL DORMITORIO · WASD / stick izquierdo");
-                Tell("move", "¡PATAS EN MARCHA!", "Movete con WASD / stick izquierdo para explorar y acercarte a los objetos."); break;
+                Tell("move", "¡EXPLORÁ EL DORMITORIO!", "Recorré el cuarto y acercate a los objetos.", ControlHint.Move);
+                break;
             case BedroomTutorialStep.Look:
-                SetObjective("OBJETIVO: MIRÁ A TU ALREDEDOR · mouse / stick derecho");
-                Tell("look", "¡MIRÁ A TU ALREDEDOR!", "Mové el mouse / stick derecho para orientar la cámara y descubrir con qué interactuar."); break;
+                Tell("look", "¡MIRÁ A TU ALREDEDOR!", "Orientá la cámara para descubrir con qué podés interactuar.", ControlHint.Look);
+                break;
             case BedroomTutorialStep.FirstToy:
             case BedroomTutorialStep.SecondToy:
-                SetObjective("OBJETIVO: AGARRÁ EL JUGUETE ILUMINADO · E / cruz (A en Xbox)");
-                Tell("toy", "¡AGARRALO CON LA BOCA!", "Acercate y mirá el juguete iluminado: E / cruz (A en Xbox) lo agarra para llevarlo."); break;
+                Tell("toy", "¡AGARRÁ EL JUGUETE!", "Acercate al juguete iluminado y tomalo.", ControlHint.Interact);
+                break;
             case BedroomTutorialStep.DropFirst:
             case BedroomTutorialStep.DropSecond:
-                SetObjective("OBJETIVO: SOLTÁ EL JUGUETE · E / cruz (A en Xbox)");
-                Tell("drop", "¡LLEVÁ Y SOLTÁ!", "Movete con el objeto en la boca. Otra pulsación de E / cruz (A en Xbox) lo suelta."); break;
+                Tell("drop", "¡SOLTÁ EL JUGUETE!", "Llevalo con vos y volvé a pulsar para soltarlo.", ControlHint.Interact);
+                break;
             case BedroomTutorialStep.Bark:
-                SetObjective("OBJETIVO: PROBÁ TU LADRIDO · B / cuadrado (X en Xbox)");
-                Tell("bark", "¡HACETE ESCUCHAR!", "Pulsá B / cuadrado (X en Xbox) para ladrar. Soltá el botón entre pulsaciones."); break;
+                Tell("bark", "¡LADRÁ!", "Probá tu ladrido y soltá el botón entre pulsaciones.", ControlHint.Bark);
+                break;
             case BedroomTutorialStep.ConsecutiveBarks:
-                SetObjective("OBJETIVO: LADRÁ DOS VECES SEGUIDAS CERCA DE TUS DUEÑOS");
-                Tell("combo", "¡DOS LADRIDOS TIENEN MÁS FUERZA!", "Cerca de tus dueños, pulsá dos veces B / cuadrado (X en Xbox) para reforzar el segundo ladrido."); break;
+                Tell("combo", "¡LADRÁ DOS VECES!", "Cerca de tus dueños, dos ladridos seguidos refuerzan el segundo.", ControlHint.Bark);
+                break;
             case BedroomTutorialStep.Abduction:
-                SetObjective("OBJETIVO: OBSERVÁ LA ENERGÍA Y SEGUÍ A TUS DUEÑOS");
-                Tell("beam", "¡TUS LADRIDOS ALTERAN EL RAYO!", "Ladrá cerca de la energía y mirá hacia ella: observá cómo reacciona la tecnología."); break;
+                Tell("beam", "¡EL RAYO REACCIONA A TUS LADRIDOS!", "Acercate a la energía, mirá hacia ella y ladrá.", ControlHint.Bark);
+                break;
             case BedroomTutorialStep.ThirdToy:
             case BedroomTutorialStep.Shutter:
-                SetObjective("OBJETIVO: TIRÁ DEL JUGUETE JUNTO A LA SILLA");
-                Tell("shutter", "¡ESE JUGUETE ESTÁ AMARRADO!", "Agarralo con E / cruz (A en Xbox) y alejate: tirar del amarre puede mover lo que sostiene."); break;
+                Tell("shutter", "¡TIRÁ DEL JUGUETE!", "Agarrá el juguete junto a la silla y alejate para tensar el amarre.", ControlHint.Interact);
+                break;
             case BedroomTutorialStep.Complete:
-                SetObjective("OBJETIVO: SEGUÍ A TUS DUEÑOS HACIA LA SALA");
-                Tell("shutter-closed", "¡CORTASTE LA ENTRADA DEL RAYO!", "La persiana cerrada interrumpió esta conexión. Tus dueños siguen en peligro: seguí su recorrido.", 1); break;
+                Tell("shutter-closed", "¡SEGUÍ A TUS DUEÑOS!", "Cortaste esta entrada del rayo, pero todavía siguen en peligro.", priority: 1);
+                break;
         }
     }
 
     public void OnWindowAttempt()
     {
-        SetObjective("OBJETIVO: INTERRUMPÍ EL RAYO · B / cuadrado (X en Xbox)");
-        Tell("living-beam", "¡TUS LADRIDOS ALTERAN EL RAYO!", "Acercate, mirá hacia la energía y ladrá. Dos pulsaciones seguidas refuerzan la interferencia.");
+        ChangeContext();
+        Tell("living-beam", "¡LADRÁ CERCA DEL RAYO!", "Acercate, mirá hacia la energía e interrumpila.", ControlHint.Bark);
     }
 
     private void OnInterferenceAccepted()
     {
         if (!beam || !beam.IsBeamActive || !progression) return;
         if (progression.CurrentEpisode == NarrativeEpisode.LivingRoom && living && living.IsWaitingForBarks)
-            Tell("living-hit", "¡EL RAYO ESTÁ FALLANDO!", "Tu ladrido produjo interferencia: observá su color, pulso y deformación. Seguí interrumpiéndolo.", 1);
-        else if (progression.CurrentEpisode == NarrativeEpisode.Bedroom && tutorial && tutorial.Step >= BedroomTutorialStep.Abduction)
-            Tell("bedroom-hit", "¡EL RAYO REACCIONÓ!", "Tu ladrido alteró la energía. La reacción del haz confirma que estás lo bastante cerca y bien orientado.", 1);
+            Tell("living-hit", "¡EL RAYO ESTÁ FALLANDO!", "Tu ladrido produjo interferencia. Seguí interrumpiéndolo.",
+                priority: 1, remindable: false);
+        else if (progression.CurrentEpisode == NarrativeEpisode.Bedroom && tutorial &&
+            tutorial.Step >= BedroomTutorialStep.Abduction)
+            Tell("bedroom-hit", "¡EL RAYO REACCIONÓ!", "La alteración del haz confirma que tu ladrido lo alcanzó.",
+                priority: 1, remindable: false);
     }
 
     public void OnWindowShifted()
     {
-        SetObjective("OBJETIVO: SEGUÍ EL RECORRIDO DE TUS DUEÑOS");
-        Tell("shift", "¡LA NAVE CAMBIA DE OBJETIVO!", "La interferencia obligó a buscar otra entrada. Seguí a tus dueños.", 1);
+        ChangeContext();
+        Tell("shift", "¡SEGUÍ A TUS DUEÑOS!", "La nave cambió de entrada. Acompañá su recorrido.", priority: 1);
     }
 
     public void OnBathroomArrived()
     {
-        SetObjective("OBJETIVO: ENTRÁ AL BAÑO Y LADRÁ CERCA DE TUS DUEÑOS");
-        Tell("bathroom-bark", "¡HACETE ESCUCHAR EN EL BAÑO!", "Tus dueños esperan adentro. Acercate, mirá hacia ellos y ladrá para provocar una reacción.");
+        ChangeContext();
+        Tell("bathroom-bark", "¡LADRÁ CERCA DE TUS DUEÑOS!", "Entrá al baño, acercate y hacé que te escuchen.", ControlHint.Bark);
     }
 
     private void OnBathroomAccident()
     {
-        SetObjective("OBJETIVO: OBSERVÁ QUÉ BLOQUEÓ LA SALIDA");
-        Tell("accident", "¡TU LADRIDO LOS SOBRESALTÓ!", "La reacción de tus dueños sacudió el soporte del cesto. Prestá atención a lo que cae.", 1);
+        ChangeContext();
+        Tell("accident", "¡ALGO BLOQUEÓ LA SALIDA!", "Tu ladrido los sobresaltó. Mirá qué cayó cerca de la puerta.",
+            priority: 1);
     }
 
     private void OnClothesReady()
     {
-        SetObjective("OBJETIVO: RETIRÁ LAS TRES PRENDAS DE LA PUERTA");
-        Tell("clothes", "¡DESPEJÁ LA SALIDA!", "Mirá cada prenda y agarrala con E / cruz (A en Xbox). Llevá las tres lejos de la puerta y soltálas con el mismo botón.");
+        ChangeContext();
+        Tell("clothes", "¡SACÁ LAS TRES PRENDAS!", "Agarrá cada prenda, llevala lejos de la puerta y soltala.",
+            ControlHint.Interact);
     }
 
     public void OnBathroomSolved()
     {
-        SetObjective("OBJETIVO: SALÍ DEL BAÑO Y SEGUÍ A TUS DUEÑOS");
-        Tell("bathroom-clear", "¡LA PUERTA QUEDÓ LIBRE!", "Retiraste las tres prendas. Ya podés salir y continuar con tus dueños.", 1);
+        ChangeContext();
+        Tell("bathroom-clear", "¡SEGUÍ A TUS DUEÑOS!", "La puerta quedó libre. Salí del baño y continuá.", priority: 1);
     }
 
     public void OnKitchenStarted()
     {
-        SetObjective("OBJETIVO: AHUYENTÁ AL ALIENÍGENA · B / cuadrado (X en Xbox)");
-        Tell("alien-a", "¡NO LO DEJES OPERAR!", "Acercate y ladrá mirando al alienígena. Cada ladrido que lo alcanza lo hace reaccionar; insistí para ahuyentarlo.");
+        ChangeContext();
+        Tell("alien-a", "¡AHUYENTÁ AL ALIENÍGENA!", "Acercate, miralo y ladrá hasta obligarlo a retirarse.", ControlHint.Bark);
     }
 
     public void OnAlienHidden()
     {
-        SetObjective("OBJETIVO: BUSCÁ AL ALIENÍGENA Y HACETE ESCUCHAR");
-        Tell("hidden", "¡SE ESCONDIÓ!", "Explorá y prestá atención a las pistas del entorno. Encontralo antes de volver a ladrarle.");
+        ChangeContext();
+        Tell("hidden", "¡BUSCÁ AL ALIENÍGENA!", "Explorá y prestá atención a las pistas del entorno.");
     }
 
     public void OnAlienDiscovered()
     {
-        SetObjective("OBJETIVO: AHUYENTÁ AL ALIENÍGENA QUE ENCONTRASTE");
-        Tell("discovered", "¡TE ESCUCHÓ!", "Encontraste al alienígena y tu ladrido lo alcanzó. Seguí ladrando hacia él para hacerlo salir.", 1);
+        ChangeContext();
+        Tell("discovered", "¡VOLVÉ A LADRARLE!", "Lo encontraste. Seguí interrumpiéndolo para hacerlo salir.",
+            ControlHint.Bark, priority: 1);
     }
 
     public void OnRepairStarted()
     {
-        SetObjective("OBJETIVO: INTERRUMPÍ AL ALIENÍGENA DEL CONTROL REMOTO");
-        Tell("repair", "¡ESTÁ REPARANDO EL RAYO!", "El control remoto recupera la estabilidad de la energía. Acercate y ladrá al operador hasta detener la reparación.");
+        ChangeContext();
+        Tell("repair", "¡INTERRUMPÍ LA REPARACIÓN!", "Acercate al operador del control remoto y ladrale.",
+            ControlHint.Bark);
     }
 
     public void OnRepairInterrupted()
     {
-        SetObjective("OBJETIVO: SEGUÍ A TUS DUEÑOS");
-        Tell("repair-stopped", "¡INTERRUMPISTE LA REPARACIÓN!", "El operador dejó de usar el control. Seguí a tus dueños cuando continúen el recorrido.", 1);
+        ChangeContext();
+        Tell("repair-stopped", "¡SEGUÍ A TUS DUEÑOS!", "Detuviste la reparación. Acompañalos cuando retomen el recorrido.",
+            priority: 1);
     }
 
     public void OnKitchenCompleted()
     {
-        SetObjective("OBJETIVO: ACOMPAÑÁ A TUS DUEÑOS AL DORMITORIO");
-        Tell("return", "¡TUS DUEÑOS SIGUEN MOVIÉNDOSE!", "Acompañalos de regreso. Todavía hay algo extraño en la casa.");
+        ChangeContext();
+        Tell("return", "¡SEGUÍ A TUS DUEÑOS!", "Acompañalos de regreso al dormitorio.");
     }
 
     public void OnClosingStarted()
     {
         closing = true;
-        StopAllCoroutines(); presentation = null; pending.Clear();
-        if (noticeGroup) noticeGroup.alpha = 0;
-        if (objective) objective.text = "";
-        CurrentNoticeId = null;
+        StopAllCoroutines();
+        presentation = null;
+        pending.Clear();
+        reminder = null;
+        HideNotice();
     }
 
     private void OnDisable()
     {
         if (beam) beam.InterferenceAccepted.RemoveListener(OnInterferenceAccepted);
-        if (bathroom) { bathroom.AccidentStarted -= OnBathroomAccident; bathroom.ClothesReady -= OnClothesReady; }
-        StopAllCoroutines(); presentation = null; pending.Clear(); CurrentNoticeId = null;
-        if (noticeGroup) noticeGroup.alpha = 0;
+        if (bathroom)
+        {
+            bathroom.AccidentStarted -= OnBathroomAccident;
+            bathroom.ClothesReady -= OnClothesReady;
+        }
+        StopAllCoroutines();
+        presentation = null;
+        pending.Clear();
+        reminder = null;
+        HideNotice();
     }
 }

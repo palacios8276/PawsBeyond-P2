@@ -26612,7 +26612,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &813003759
 RectTransform:
   m_ObjectHideFlags: 0
@@ -46531,9 +46531,13 @@ MonoBehaviour:
   progression: {fileID: 320216089}
   beam: {fileID: 75071465}
   bathroom: {fileID: 1828542571}
-  minimumReadSeconds: 3
-  noticeSeconds: 7
+  initialDuration: 3
+  inactivitySeconds: 2.5
+  reminderDuration: 2.5
   fadeSeconds: 0.2
+  reminderRepeatInterval: 8
+  movementThreshold: 0.25
+  pointerDeltaThreshold: 0.8
 --- !u!1 &1527196311
 GameObject:
   m_ObjectHideFlags: 0
