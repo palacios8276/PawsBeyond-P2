@@ -235,10 +235,15 @@ public sealed class ScentTrailPath : MonoBehaviour
             color.a *= intensity * fade;
             if (color.a <= 0.01f) continue;
 
-            float drift = age01 * particleSize * 1.4f;
+            float drift = age01 * particleSize * 2.2f;
             Vector3 position = mark.Position + Vector3.up * drift;
             position += new Vector3(Mathf.Sin(mark.VisualSeed + age01 * 4f), 0f,
-                Mathf.Cos(mark.VisualSeed + age01 * 3f)) * particleSize * 0.12f;
+                Mathf.Cos(mark.VisualSeed + age01 * 3f)) * particleSize * 0.22f;
+
+            float scaleVariation = Mathf.Lerp(0.68f, 1.12f,
+                Mathf.Sin(mark.VisualSeed * 1.73f) * 0.5f + 0.5f);
+            color.a *= Mathf.Lerp(0.68f, 1f,
+                Mathf.Cos(mark.VisualSeed * 2.11f) * 0.5f + 0.5f);
 
             var emit = new ParticleSystem.EmitParams
             {
@@ -246,7 +251,7 @@ public sealed class ScentTrailPath : MonoBehaviour
                 velocity = Vector3.zero,
                 startColor = color,
                 startLifetime = refreshSeconds * 1.5f,
-                startSize = particleSize * Mathf.Lerp(0.85f, 1.1f, Mathf.Sin(mark.VisualSeed) * 0.5f + 0.5f)
+                startSize = particleSize * scaleVariation
             };
             particles.Emit(emit, 1);
             VisibleSampleCount++;
@@ -286,15 +291,20 @@ public sealed class ScentTrailPath : MonoBehaviour
         runtimeMaterial.SetTexture("_BaseMap", softParticleTexture);
         runtimeMaterial.SetTexture("_MainTex", softParticleTexture);
         runtimeMaterial.SetFloat("_Surface", 1f);
+        runtimeMaterial.SetFloat("_Blend", 0f);
+        runtimeMaterial.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        runtimeMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+        runtimeMaterial.SetFloat("_ZWrite", 0f);
         runtimeMaterial.SetOverrideTag("RenderType", "Transparent");
         runtimeMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        runtimeMaterial.DisableKeyword("_ALPHATEST_ON");
         runtimeMaterial.renderQueue = (int)RenderQueue.Transparent;
         renderer.sharedMaterial = runtimeMaterial;
     }
 
     private static Texture2D CreateSoftParticleTexture()
     {
-        const int size = 32;
+        const int size = 64;
         var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
         {
             name = "ScentSoftCircle_Runtime",
@@ -308,8 +318,15 @@ public sealed class ScentTrailPath : MonoBehaviour
         for (int y = 0; y < size; y++)
         for (int x = 0; x < size; x++)
         {
-            float distance = Vector2.Distance(new Vector2(x, y), center) / radius;
-            float alpha = Mathf.SmoothStep(1f, 0f, distance);
+            Vector2 point = (new Vector2(x, y) - center) / radius;
+            float distance = point.magnitude;
+            float angle = Mathf.Atan2(point.y, point.x);
+            float unevenEdge = 0.78f + Mathf.Sin(angle * 3f + 0.7f) * 0.07f
+                + Mathf.Sin(angle * 5f - 1.1f) * 0.045f;
+            float alpha = Mathf.SmoothStep(unevenEdge, 0.08f, distance);
+            float internalVariation = 0.82f + 0.18f * Mathf.Sin(point.x * 11f + point.y * 7f + 0.4f)
+                * Mathf.Sin(point.y * 9f - point.x * 5f);
+            alpha *= Mathf.Clamp01(internalVariation);
             pixels[y * size + x] = new Color(1f, 1f, 1f, alpha * alpha);
         }
 
