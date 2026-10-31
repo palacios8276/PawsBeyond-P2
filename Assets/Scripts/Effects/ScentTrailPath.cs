@@ -21,6 +21,9 @@ public sealed class ScentTrailPath : MonoBehaviour
     [SerializeField, Min(0.1f)] private float sampleSpacing = 0.65f;
     [SerializeField, Min(0.02f)] private float particleSize = 0.09f;
     [SerializeField, Range(0f, 2f)] private float intensity = 0.55f;
+    [SerializeField, Range(0.5f, 2f)] private float colorBrightness = 1.12f;
+    [SerializeField, Range(0f, 0.35f)] private float softHaloOpacity = 0.12f;
+    [SerializeField, Range(1f, 2.5f)] private float softHaloScale = 1.65f;
     [SerializeField, Min(0.05f)] private float refreshSeconds = 0.15f;
     [SerializeField, Min(1)] private int maximumMarks = 48;
     [SerializeField, Min(0.5f)] private float teleportThreshold = 3f;
@@ -232,6 +235,9 @@ public sealed class ScentTrailPath : MonoBehaviour
             float proximity = 1f - Mathf.Sqrt(distanceSqr) / visibleRange;
             float fade = (1f - age01) * Mathf.SmoothStep(0.15f, 1f, proximity);
             Color color = baseColor;
+            color.r *= colorBrightness;
+            color.g *= colorBrightness;
+            color.b *= colorBrightness;
             color.a *= intensity * fade;
             if (color.a <= 0.01f) continue;
 
@@ -254,6 +260,14 @@ public sealed class ScentTrailPath : MonoBehaviour
                 startSize = particleSize * scaleVariation
             };
             particles.Emit(emit, 1);
+            if (softHaloOpacity > 0f)
+            {
+                Color haloColor = color;
+                haloColor.a *= softHaloOpacity;
+                emit.startColor = haloColor;
+                emit.startSize = particleSize * scaleVariation * softHaloScale;
+                particles.Emit(emit, 1);
+            }
             VisibleSampleCount++;
         }
     }
@@ -268,7 +282,7 @@ public sealed class ScentTrailPath : MonoBehaviour
         main.loop = false;
         main.playOnAwake = false;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
-        main.maxParticles = maximumMarks;
+        main.maxParticles = maximumMarks * 2;
         main.startSpeed = 0f;
 
         var emission = particles.emission;
