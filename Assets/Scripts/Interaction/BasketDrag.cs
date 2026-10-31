@@ -23,14 +23,18 @@ public class BasketDrag : MonoBehaviour
     private RigidbodyConstraints previousConstraints;
     private CollisionDetectionMode previousCollisionMode;
     private RigidbodyInterpolation previousInterpolation;
+    private InteractableHighlight highlight;
     public bool IsHeld => holder != null;
     public bool IsExtracting => IsHeld && extracting;
+    public bool CanBeGrabbed => body && !body.isKinematic && !IsHeld;
     public bool HasBeenDragged { get; private set; }
 
     private void Awake()
     {
         body = GetComponent<Rigidbody>();
         basketColliders = GetComponentsInChildren<Collider>();
+        highlight = GetComponent<InteractableHighlight>();
+        if (!highlight) highlight = gameObject.AddComponent<InteractableHighlight>();
     }
 
     public bool Grab(Transform player)
@@ -68,7 +72,13 @@ public class BasketDrag : MonoBehaviour
         extractionElapsed = 0f;
         extracting = true;
         HasBeenDragged = true;
+        if (highlight) highlight.SetHighlighted(false);
         return true;
+    }
+
+    public void SetInteractionHighlight(bool active)
+    {
+        if (highlight) highlight.SetHighlighted(active && CanBeGrabbed);
     }
 
     public void Release()

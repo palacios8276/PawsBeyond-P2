@@ -17,6 +17,7 @@ public class PlayerInteraction : MonoBehaviour
     [SerializeField] private Transform interactionOrigin;
     private PlayerInputActions inputActions;
     private BasketDrag heldBasket;
+    private BasketDrag highlightedCandidate;
     private readonly Collider[] candidates = new Collider[32];
     private readonly Dictionary<BasketDrag, Vector3> candidatePoints = new Dictionary<BasketDrag, Vector3>();
     private readonly RaycastHit[] obstructionHits = new RaycastHit[16];
@@ -41,9 +42,14 @@ public class PlayerInteraction : MonoBehaviour
         inputActions.Player.Disable();
         if (heldBasket) heldBasket.Release();
         heldBasket = null;
+        SetHighlightedCandidate(null);
     }
 
     private void OnDestroy() => inputActions?.Dispose();
+    private void Update()
+    {
+        SetHighlightedCandidate(IsDragging ? null : FindClosestCandidate());
+    }
     private void OnInteract(InputAction.CallbackContext context) => TryInteract();
 
     private void TryInteract()
@@ -62,6 +68,14 @@ public class PlayerInteraction : MonoBehaviour
             heldBasket = candidate;
             onObjectGrabbed.Invoke(candidate);
         }
+    }
+
+    private void SetHighlightedCandidate(BasketDrag candidate)
+    {
+        if (highlightedCandidate == candidate) return;
+        if (highlightedCandidate) highlightedCandidate.SetInteractionHighlight(false);
+        highlightedCandidate = candidate;
+        if (highlightedCandidate) highlightedCandidate.SetInteractionHighlight(true);
     }
 
     private BasketDrag FindClosestCandidate()
@@ -85,7 +99,7 @@ public class PlayerInteraction : MonoBehaviour
             Collider candidateCollider = candidates[i];
             if (!candidateCollider) continue;
             BasketDrag candidate = candidateCollider.GetComponentInParent<BasketDrag>();
-            if (!candidate || candidate.IsHeld) continue;
+            if (!candidate || !candidate.CanBeGrabbed) continue;
 
             Vector3 point = candidateCollider.ClosestPoint(origin);
             Vector3 delta = point - origin;
