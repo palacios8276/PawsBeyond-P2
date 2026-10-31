@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-public enum KitchenAlienState { Inactive, Appearing, Throwing, Provoking, WaitingForBark, Startled, ReleasingShutter, Running, Repairing, Finished, Hiding, Crawling, ThrowingOtherHand }
+public enum KitchenAlienState { Inactive, Appearing, Throwing, Provoking, WaitingForBark, Startled, ReleasingShutter, Running, Repairing, Finished, Hiding, Crawling, ThrowingOtherHand, Investigating }
 
 [RequireComponent(typeof(CharacterController))]
 public sealed class KitchenAlien : MonoBehaviour
@@ -12,6 +12,8 @@ public sealed class KitchenAlien : MonoBehaviour
     [SerializeField] private Transform repairTarget;
     [SerializeField] private Transform otherHand;
     [SerializeField] private RemoteControlFeedback remoteControl;
+    [SerializeField] private AlienNavMeshMotor navigation;
+    [SerializeField, Min(0.1f)] private float investigationStoppingDistance = 0.75f;
     [SerializeField, Min(0.1f)] private float runSpeed = 6.5f;
     [SerializeField, Min(0.1f)] private float startleSeconds = 0.45f;
     [SerializeField] private UnityEvent onStateChanged = new UnityEvent();
@@ -41,6 +43,7 @@ public sealed class KitchenAlien : MonoBehaviour
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        if (!navigation) navigation = GetComponent<AlienNavMeshMotor>();
         visualStart = visual.localPosition;
     }
 
@@ -77,6 +80,11 @@ public sealed class KitchenAlien : MonoBehaviour
             ThrownToy.linearVelocity = (landing.position - ThrownToy.position) / flight - Physics.gravity * (flight * 0.5f);
             Throws++;
             onToyReleased.Invoke();
+        }
+        if (navigation && landing)
+        {
+            SetState(KitchenAlienState.Investigating);
+            yield return navigation.NavigateNear(landing.position, investigationStoppingDistance);
         }
         SetState(KitchenAlienState.Provoking);
     }
@@ -175,6 +183,11 @@ public sealed class KitchenAlien : MonoBehaviour
     public IEnumerator Travel(Transform[] route, bool avoidCharacters = false, bool optionalWaypoints = false)
     {
         SetState(KitchenAlienState.Running);
+        if (navigation && navigation.PrepareRoute(route))
+        {
+            yield return navigation.TravelPreparedRoute();
+            if (navigation.LastNavigationSucceeded) yield break;
+        }
         foreach (var point in route)
         {
             if (!point) continue;
