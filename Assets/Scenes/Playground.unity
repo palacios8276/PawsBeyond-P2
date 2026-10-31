@@ -1069,6 +1069,91 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 39806274}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &39965375
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 39965376}
+  - component: {fileID: 39965377}
+  m_Layer: 0
+  m_Name: AlienScentTrail
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &39965376
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 39965375}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1423776005}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &39965377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 39965375}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a078af3ec9a892d48bf4b38050be66a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  observer: {fileID: 75761117}
+  routePoints:
+  - {fileID: 2090739269}
+  - {fileID: 1351474703}
+  - {fileID: 159505363}
+  - {fileID: 1025669508}
+  - {fileID: 399994119}
+  - {fileID: 404236718}
+  - {fileID: 407210568}
+  - {fileID: 1614671808}
+  - {fileID: 754291984}
+  - {fileID: 94673474}
+  - {fileID: 1914010723}
+  - {fileID: 1042170694}
+  - {fileID: 755015438}
+  - {fileID: 1433687632}
+  - {fileID: 1064396392}
+  - {fileID: 1778562255}
+  - {fileID: 87525419}
+  - {fileID: 766679751}
+  - {fileID: 577693953}
+  - {fileID: 1072985014}
+  - {fileID: 1786889946}
+  - {fileID: 621861615}
+  - {fileID: 1386751149}
+  - {fileID: 1379223348}
+  - {fileID: 231288916}
+  - {fileID: 1816378989}
+  - {fileID: 2087004341}
+  - {fileID: 699190852}
+  - {fileID: 1836821276}
+  - {fileID: 453922863}
+  scentColor: {r: 0.35, g: 0.75, b: 1, a: 0.14}
+  intensity: 0.65
+  visibleRange: 5.5
+  sampleSpacing: 1.15
+  particleDuration: 1.8
+  particleSize: 0.13
+  refreshSeconds: 0.45
+  maximumParticles: 80
+  worldOffset: {x: 0, y: 0.12, z: 0}
 --- !u!1 &41782404
 GameObject:
   m_ObjectHideFlags: 0
@@ -1343,6 +1428,92 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 50730936}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &56169636
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 56169637}
+  - component: {fileID: 56169638}
+  m_Layer: 0
+  m_Name: HumanScentTrail
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &56169637
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 56169636}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1423776005}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &56169638
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 56169636}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a078af3ec9a892d48bf4b38050be66a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  observer: {fileID: 75761117}
+  routePoints:
+  - {fileID: 1146985399}
+  - {fileID: 2005858373}
+  - {fileID: 1349972244}
+  - {fileID: 1881540689}
+  - {fileID: 680960213}
+  - {fileID: 1856897450}
+  - {fileID: 1410137487}
+  - {fileID: 2021389446}
+  - {fileID: 1410137487}
+  - {fileID: 1856897450}
+  - {fileID: 1414432705}
+  - {fileID: 939753903}
+  - {fileID: 16090570}
+  - {fileID: 1754824749}
+  - {fileID: 1990414415}
+  - {fileID: 1650152116}
+  - {fileID: 1051383292}
+  - {fileID: 1656722254}
+  - {fileID: 1190810309}
+  - {fileID: 2101620017}
+  - {fileID: 762453923}
+  - {fileID: 2042344878}
+  - {fileID: 1844370983}
+  - {fileID: 1545130359}
+  - {fileID: 903324225}
+  - {fileID: 2035336243}
+  - {fileID: 663473706}
+  - {fileID: 1178879341}
+  - {fileID: 257450603}
+  - {fileID: 773722994}
+  - {fileID: 2084814257}
+  scentColor: {r: 1, g: 0.55, b: 0.16, a: 0.22}
+  intensity: 0.65
+  visibleRange: 5.5
+  sampleSpacing: 1.15
+  particleDuration: 1.8
+  particleSize: 0.17
+  refreshSeconds: 0.45
+  maximumParticles: 80
+  worldOffset: {x: 0, y: 0.12, z: 0}
 --- !u!1 &75071461
 GameObject:
   m_ObjectHideFlags: 0
@@ -44042,6 +44213,39 @@ MonoBehaviour:
   m_SelectedFaces: 
   m_SelectedEdges: []
   m_SelectedVertices: 
+--- !u!1 &1423776004
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1423776005}
+  m_Layer: 0
+  m_Name: P2_ScentTrails
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1423776005
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1423776004}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 56169637}
+  - {fileID: 39965376}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1425949407
 GameObject:
   m_ObjectHideFlags: 0
@@ -53255,6 +53459,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: ef62c0b57612f3c4685df0e24e9d36bf, type: 3}
   - {fileID: 8300000, guid: f8a9153a1ab81db45b7622d0c507328a, type: 3}
   stepDistance: 0.8
+  runningSpeedThreshold: 3.5
+  runningStepDistanceMultiplier: 0.72
   minimumInterval: 0.16
   minimumSpeed: 0.12
   pitchRange: {x: 0.95, y: 1.05}
@@ -78081,3 +78287,4 @@ SceneRoots:
   - {fileID: 885013184}
   - {fileID: 1008762064}
   - {fileID: 831135706}
+  - {fileID: 1423776005}
