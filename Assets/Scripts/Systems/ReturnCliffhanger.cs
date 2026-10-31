@@ -12,6 +12,7 @@ public sealed class ReturnCliffhanger : MonoBehaviour
     [SerializeField] private DoorTriggerDetector bedroomTrigger;
     [SerializeField] private HingeJoint bedroomDoor;
     [SerializeField] private Transform player;
+    [SerializeField] private PlayerGameplayLock gameplayLock;
     [SerializeField] private int bedroomArrivalWaypoint = 30;
     [SerializeField] private Light glow;
     [SerializeField] private GameObject partialFigure;
@@ -93,6 +94,7 @@ public sealed class ReturnCliffhanger : MonoBehaviour
         if (TriggerCount != 0 || !IsEligible || !PlayerIsInside()) return;
         closingRequested = true;
         TriggerCount++;
+        if (gameplayLock) gameplayLock.LockForClosing();
         StartCoroutine(Present());
     }
     private IEnumerator Present()

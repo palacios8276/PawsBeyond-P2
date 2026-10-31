@@ -1713,6 +1713,7 @@ GameObject:
   - component: {fileID: 75761119}
   - component: {fileID: 75761120}
   - component: {fileID: 75761121}
+  - component: {fileID: 75761122}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -1943,6 +1944,43 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &75761122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 75761112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d1f0e3dd359c694ea24736407ca6174, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  movement: {fileID: 75761118}
+  interaction: {fileID: 75761119}
+  bark: {fileID: 75761121}
+  additionalGameplayControls: []
+  normalGameplaySources:
+  - {fileID: 8753658762549877289}
+  - {fileID: 2543825974023545337}
+  - {fileID: 400323036}
+  - {fileID: 1680884830}
+  - {fileID: 116153685}
+  - {fileID: 837109667}
+  - {fileID: 1376273040}
+  - {fileID: 1163901670}
+  - {fileID: 736332238}
+  - {fileID: 1445242384}
+  - {fileID: 8593987786462139457}
+  - {fileID: 8173233346874299340}
+  - {fileID: 1743909325}
+  - {fileID: 246957107}
+  - {fileID: 370759517}
+  - {fileID: 1178545660}
+  - {fileID: 1086277724}
+  - {fileID: 400004220}
+  - {fileID: 726014878}
+  audioFadeSeconds: 0.65
 --- !u!1 &84629204
 GameObject:
   m_ObjectHideFlags: 0
@@ -40555,6 +40593,7 @@ MonoBehaviour:
   bedroomTrigger: {fileID: 2132809715}
   bedroomDoor: {fileID: 2008956184}
   player: {fileID: 75761117}
+  gameplayLock: {fileID: 75761122}
   bedroomArrivalWaypoint: 30
   glow: {fileID: 1595664323}
   partialFigure: {fileID: 885013183}
@@ -77715,6 +77754,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3249030797717651022, guid: 929d06525b0dfc1418dee7bbe46dab9e, type: 3}
   m_PrefabInstance: {fileID: 2543825974023545334}
   m_PrefabAsset: {fileID: 0}
+--- !u!82 &2543825974023545337 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 4993149551231192595, guid: 929d06525b0dfc1418dee7bbe46dab9e, type: 3}
+  m_PrefabInstance: {fileID: 2543825974023545334}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5346158838876859126
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -78071,6 +78115,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7415151358292271185, guid: d6cd136ecda36ba43807b579ad06e486, type: 3}
   m_PrefabInstance: {fileID: 8173233346874299337}
   m_PrefabAsset: {fileID: 0}
+--- !u!82 &8173233346874299340 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 4789787974974225256, guid: d6cd136ecda36ba43807b579ad06e486, type: 3}
+  m_PrefabInstance: {fileID: 8173233346874299337}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8593987786462139454
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -78170,6 +78219,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3187101500301939888, guid: bcffa29b3e580af42bb687a2458b6b20, type: 3}
   m_PrefabInstance: {fileID: 8593987786462139454}
   m_PrefabAsset: {fileID: 0}
+--- !u!82 &8593987786462139457 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 3371454377106967716, guid: bcffa29b3e580af42bb687a2458b6b20, type: 3}
+  m_PrefabInstance: {fileID: 8593987786462139454}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8753658762549877286
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -78252,6 +78306,11 @@ MonoBehaviour:
 --- !u!4 &8753658762549877288 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 691726506030132968, guid: bd6590abe271edf459fe95c383452b1e, type: 3}
+  m_PrefabInstance: {fileID: 8753658762549877286}
+  m_PrefabAsset: {fileID: 0}
+--- !u!82 &8753658762549877289 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 7847141605087606481, guid: bd6590abe271edf459fe95c383452b1e, type: 3}
   m_PrefabInstance: {fileID: 8753658762549877286}
   m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
