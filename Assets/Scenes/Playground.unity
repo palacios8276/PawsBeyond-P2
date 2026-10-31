@@ -1113,47 +1113,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a078af3ec9a892d48bf4b38050be66a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  scentEnabled: 1
+  scentKind: 1
   observer: {fileID: 75761117}
-  routePoints:
-  - {fileID: 2090739269}
-  - {fileID: 1351474703}
-  - {fileID: 159505363}
-  - {fileID: 1025669508}
-  - {fileID: 399994119}
-  - {fileID: 404236718}
-  - {fileID: 407210568}
-  - {fileID: 1614671808}
-  - {fileID: 754291984}
-  - {fileID: 94673474}
-  - {fileID: 1914010723}
-  - {fileID: 1042170694}
-  - {fileID: 755015438}
-  - {fileID: 1433687632}
-  - {fileID: 1064396392}
-  - {fileID: 1778562255}
-  - {fileID: 87525419}
-  - {fileID: 766679751}
-  - {fileID: 577693953}
-  - {fileID: 1072985014}
-  - {fileID: 1786889946}
-  - {fileID: 621861615}
-  - {fileID: 1386751149}
-  - {fileID: 1379223348}
-  - {fileID: 231288916}
-  - {fileID: 1816378989}
-  - {fileID: 2087004341}
-  - {fileID: 699190852}
-  - {fileID: 1836821276}
-  - {fileID: 453922863}
-  scentColor: {r: 0.35, g: 0.75, b: 1, a: 0.14}
-  intensity: 0.65
-  visibleRange: 5.5
-  sampleSpacing: 1.15
-  particleDuration: 1.8
-  particleSize: 0.13
-  refreshSeconds: 0.45
-  maximumParticles: 80
+  emitters:
+  - {fileID: 8753658762549877288}
+  - {fileID: 8593987786462139456}
+  visibleRange: 4.5
+  sampleSpacing: 0.85
+  particleSize: 0.065
+  intensity: 0.34
+  refreshSeconds: 0.15
+  maximumMarks: 28
+  teleportThreshold: 3
   worldOffset: {x: 0, y: 0.12, z: 0}
+  humanColor: {r: 1, g: 0.55, b: 0.18, a: 0.42}
+  humanDuration: 8
+  alienColor: {r: 0.2, g: 0.82, b: 0.88, a: 0.22}
+  alienDuration: 3.2
 --- !u!1 &41782404
 GameObject:
   m_ObjectHideFlags: 0
@@ -1472,48 +1449,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a078af3ec9a892d48bf4b38050be66a3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  scentEnabled: 1
+  scentKind: 0
   observer: {fileID: 75761117}
-  routePoints:
-  - {fileID: 1146985399}
-  - {fileID: 2005858373}
-  - {fileID: 1349972244}
-  - {fileID: 1881540689}
-  - {fileID: 680960213}
-  - {fileID: 1856897450}
-  - {fileID: 1410137487}
-  - {fileID: 2021389446}
-  - {fileID: 1410137487}
-  - {fileID: 1856897450}
-  - {fileID: 1414432705}
-  - {fileID: 939753903}
-  - {fileID: 16090570}
-  - {fileID: 1754824749}
-  - {fileID: 1990414415}
-  - {fileID: 1650152116}
-  - {fileID: 1051383292}
-  - {fileID: 1656722254}
-  - {fileID: 1190810309}
-  - {fileID: 2101620017}
-  - {fileID: 762453923}
-  - {fileID: 2042344878}
-  - {fileID: 1844370983}
-  - {fileID: 1545130359}
-  - {fileID: 903324225}
-  - {fileID: 2035336243}
-  - {fileID: 663473706}
-  - {fileID: 1178879341}
-  - {fileID: 257450603}
-  - {fileID: 773722994}
-  - {fileID: 2084814257}
-  scentColor: {r: 1, g: 0.55, b: 0.16, a: 0.22}
-  intensity: 0.65
-  visibleRange: 5.5
-  sampleSpacing: 1.15
-  particleDuration: 1.8
-  particleSize: 0.17
-  refreshSeconds: 0.45
-  maximumParticles: 80
+  emitters:
+  - {fileID: 807891693}
+  visibleRange: 5
+  sampleSpacing: 0.65
+  particleSize: 0.085
+  intensity: 0.55
+  refreshSeconds: 0.15
+  maximumMarks: 42
+  teleportThreshold: 3
   worldOffset: {x: 0, y: 0.12, z: 0}
+  humanColor: {r: 1, g: 0.55, b: 0.18, a: 0.42}
+  humanDuration: 8
+  alienColor: {r: 0.2, g: 0.82, b: 0.88, a: 0.22}
+  alienDuration: 3.2
 --- !u!1 &75071461
 GameObject:
   m_ObjectHideFlags: 0

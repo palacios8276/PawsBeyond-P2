@@ -2,118 +2,320 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
+public enum ScentTrailKind
+{
+    Human,
+    Alien
+}
+
 public sealed class ScentTrailPath : MonoBehaviour
 {
+    [Header("Activación y fuentes")]
+    [SerializeField] private bool scentEnabled = true;
+    [SerializeField] private ScentTrailKind scentKind;
     [SerializeField] private Transform observer;
-    [SerializeField] private Transform[] routePoints;
-    [SerializeField] private Color scentColor = new Color(1f, 0.62f, 0.18f, 0.22f);
-    [SerializeField, Range(0f, 2f)] private float intensity = 0.65f;
-    [SerializeField, Min(0.5f)] private float visibleRange = 5.5f;
-    [SerializeField, Min(0.25f)] private float sampleSpacing = 1.1f;
-    [SerializeField, Min(0.1f)] private float particleDuration = 1.8f;
-    [SerializeField, Min(0.02f)] private float particleSize = 0.16f;
-    [SerializeField, Min(0.05f)] private float refreshSeconds = 0.45f;
-    [SerializeField, Min(1)] private int maximumParticles = 80;
+    [SerializeField] private Transform[] emitters;
+
+    [Header("Visibilidad")]
+    [SerializeField, Min(0.5f)] private float visibleRange = 5f;
+    [SerializeField, Min(0.1f)] private float sampleSpacing = 0.65f;
+    [SerializeField, Min(0.02f)] private float particleSize = 0.09f;
+    [SerializeField, Range(0f, 2f)] private float intensity = 0.55f;
+    [SerializeField, Min(0.05f)] private float refreshSeconds = 0.15f;
+    [SerializeField, Min(1)] private int maximumMarks = 48;
+    [SerializeField, Min(0.5f)] private float teleportThreshold = 3f;
     [SerializeField] private Vector3 worldOffset = new Vector3(0f, 0.12f, 0f);
 
-    private readonly List<Vector3> samples = new List<Vector3>();
+    [Header("Identidad humana")]
+    [SerializeField] private Color humanColor = new Color(1f, 0.55f, 0.18f, 0.42f);
+    [SerializeField, Min(0.1f)] private float humanDuration = 8f;
+
+    [Header("Identidad alienígena")]
+    [SerializeField] private Color alienColor = new Color(0.2f, 0.82f, 0.88f, 0.22f);
+    [SerializeField, Min(0.1f)] private float alienDuration = 3.5f;
+
+    private sealed class EmitterTracker
+    {
+        public Transform Source;
+        public Vector3 PreviousPosition;
+        public float DistanceSinceMark;
+        public bool WasEligible;
+    }
+
+    private struct ScentMark
+    {
+        public Vector3 Position;
+        public float CreatedAt;
+        public float VisualSeed;
+    }
+
+    private readonly List<EmitterTracker> trackers = new List<EmitterTracker>();
+    private readonly List<ScentMark> marks = new List<ScentMark>();
     private ParticleSystem particles;
     private Material runtimeMaterial;
+    private Texture2D softParticleTexture;
     private float nextRefresh;
+
+    public int RecordedMarkCount => marks.Count;
     public int VisibleSampleCount { get; private set; }
+    public bool IsScentEnabled => scentEnabled;
+    public ScentTrailKind Kind => scentKind;
+
+    private float ActiveDuration => scentKind == ScentTrailKind.Human ? humanDuration : alienDuration;
+    private Color ActiveColor => scentKind == ScentTrailKind.Human ? humanColor : alienColor;
 
     private void Awake()
     {
-        var emitter = new GameObject("ScentParticles_Runtime");
-        emitter.transform.SetParent(transform, false);
-        particles = emitter.AddComponent<ParticleSystem>();
-        ConfigureParticles();
-        RebuildSamples();
+        CreateParticleRenderer();
+        RebuildEmitters();
     }
 
     private void OnEnable()
     {
         nextRefresh = 0f;
-        if (samples.Count == 0) RebuildSamples();
+        RebuildEmitters();
+        ClearTrail();
     }
 
     private void Update()
     {
+        if (!scentEnabled)
+        {
+            if (marks.Count > 0 || VisibleSampleCount > 0) ClearTrail();
+            return;
+        }
+
+        TrackRealMovement();
+        RemoveExpiredMarks();
+
         if (!observer || Time.time < nextRefresh) return;
         nextRefresh = Time.time + refreshSeconds;
         RefreshVisibleTrail();
     }
 
-    public void RebuildSamples()
+    public void SetScentEnabled(bool enabled)
     {
-        samples.Clear();
-        if (routePoints == null || routePoints.Length == 0) return;
-        Transform previous = null;
-        foreach (Transform point in routePoints)
+        scentEnabled = enabled;
+        if (!enabled) ClearTrail();
+    }
+
+    public void RebuildEmitters()
+    {
+        trackers.Clear();
+        if (emitters == null) return;
+
+        foreach (Transform source in emitters)
         {
-            if (!point) continue;
-            if (!previous) samples.Add(point.position + worldOffset);
-            else
+            if (!source) continue;
+            trackers.Add(new EmitterTracker
             {
-                float distance = Vector3.Distance(previous.position, point.position);
-                int steps = Mathf.Max(1, Mathf.CeilToInt(distance / sampleSpacing));
-                for (int i = 1; i <= steps; i++)
-                    samples.Add(Vector3.Lerp(previous.position, point.position, i / (float)steps) + worldOffset);
-            }
-            previous = point;
+                Source = source,
+                PreviousPosition = source.position
+            });
         }
+    }
+
+    public void ClearTrail()
+    {
+        marks.Clear();
+        VisibleSampleCount = 0;
+        foreach (EmitterTracker tracker in trackers)
+        {
+            if (!tracker.Source) continue;
+            tracker.PreviousPosition = tracker.Source.position;
+            tracker.DistanceSinceMark = 0f;
+            tracker.WasEligible = false;
+        }
+        if (particles) particles.Clear(true);
+    }
+
+    private void TrackRealMovement()
+    {
+        foreach (EmitterTracker tracker in trackers)
+        {
+            if (!tracker.Source) continue;
+
+            Vector3 current = tracker.Source.position;
+            bool eligible = IsRelevantMovement(tracker.Source);
+            if (!eligible)
+            {
+                tracker.PreviousPosition = current;
+                tracker.DistanceSinceMark = 0f;
+                tracker.WasEligible = false;
+                continue;
+            }
+
+            if (!tracker.WasEligible)
+            {
+                tracker.PreviousPosition = current;
+                tracker.DistanceSinceMark = 0f;
+                tracker.WasEligible = true;
+                continue;
+            }
+
+            float segmentDistance = Vector3.Distance(tracker.PreviousPosition, current);
+            if (segmentDistance > teleportThreshold)
+            {
+                tracker.PreviousPosition = current;
+                tracker.DistanceSinceMark = 0f;
+                continue;
+            }
+
+            if (segmentDistance <= Mathf.Epsilon) continue;
+
+            Vector3 segmentStart = tracker.PreviousPosition;
+            float distanceLeft = segmentDistance;
+            while (tracker.DistanceSinceMark + distanceLeft >= sampleSpacing)
+            {
+                float needed = sampleSpacing - tracker.DistanceSinceMark;
+                float portion = needed / distanceLeft;
+                Vector3 markPosition = Vector3.Lerp(segmentStart, current, portion);
+                AddMark(markPosition + worldOffset);
+                segmentStart = markPosition;
+                distanceLeft -= needed;
+                tracker.DistanceSinceMark = 0f;
+            }
+
+            tracker.DistanceSinceMark += distanceLeft;
+            tracker.PreviousPosition = current;
+        }
+    }
+
+    private bool IsRelevantMovement(Transform source)
+    {
+        if (!source.gameObject.activeInHierarchy) return false;
+
+        OwnersJourney owners = source.GetComponentInParent<OwnersJourney>();
+        if (owners) return owners.HasStarted && !owners.IsComplete;
+
+        KitchenAlien alien = source.GetComponentInParent<KitchenAlien>();
+        if (alien)
+            return alien.State == KitchenAlienState.Running || alien.State == KitchenAlienState.Crawling;
+
+        return true;
+    }
+
+    private void AddMark(Vector3 position)
+    {
+        if (marks.Count >= maximumMarks) marks.RemoveAt(0);
+        marks.Add(new ScentMark
+        {
+            Position = position,
+            CreatedAt = Time.time,
+            VisualSeed = Random.Range(0f, 10f)
+        });
+    }
+
+    private void RemoveExpiredMarks()
+    {
+        float oldestAllowed = Time.time - ActiveDuration;
+        for (int i = marks.Count - 1; i >= 0; i--)
+            if (marks[i].CreatedAt < oldestAllowed) marks.RemoveAt(i);
     }
 
     private void RefreshVisibleTrail()
     {
+        if (!particles) return;
         particles.Clear(true);
         VisibleSampleCount = 0;
+
+        float duration = ActiveDuration;
         float rangeSqr = visibleRange * visibleRange;
-        foreach (Vector3 sample in samples)
+        Color baseColor = ActiveColor;
+
+        foreach (ScentMark mark in marks)
         {
-            if (VisibleSampleCount >= maximumParticles) break;
-            float distanceSqr = (sample - observer.position).sqrMagnitude;
+            float distanceSqr = (mark.Position - observer.position).sqrMagnitude;
             if (distanceSqr > rangeSqr) continue;
+
+            float age01 = Mathf.Clamp01((Time.time - mark.CreatedAt) / duration);
             float proximity = 1f - Mathf.Sqrt(distanceSqr) / visibleRange;
-            Color color = scentColor;
-            color.a *= intensity * Mathf.SmoothStep(0.2f, 1f, proximity);
+            float fade = (1f - age01) * Mathf.SmoothStep(0.15f, 1f, proximity);
+            Color color = baseColor;
+            color.a *= intensity * fade;
+            if (color.a <= 0.01f) continue;
+
+            float drift = age01 * particleSize * 1.4f;
+            Vector3 position = mark.Position + Vector3.up * drift;
+            position += new Vector3(Mathf.Sin(mark.VisualSeed + age01 * 4f), 0f,
+                Mathf.Cos(mark.VisualSeed + age01 * 3f)) * particleSize * 0.12f;
+
             var emit = new ParticleSystem.EmitParams
             {
-                position = sample,
-                velocity = Vector3.up * (0.025f + 0.035f * proximity),
+                position = position,
+                velocity = Vector3.zero,
                 startColor = color,
-                startLifetime = particleDuration,
-                startSize = particleSize * Mathf.Lerp(0.75f, 1.25f, proximity)
+                startLifetime = refreshSeconds * 1.5f,
+                startSize = particleSize * Mathf.Lerp(0.85f, 1.1f, Mathf.Sin(mark.VisualSeed) * 0.5f + 0.5f)
             };
             particles.Emit(emit, 1);
             VisibleSampleCount++;
         }
     }
 
-    private void ConfigureParticles()
+    private void CreateParticleRenderer()
     {
+        var emitter = new GameObject("ScentParticles_Runtime");
+        emitter.transform.SetParent(transform, false);
+        particles = emitter.AddComponent<ParticleSystem>();
+
         var main = particles.main;
         main.loop = false;
         main.playOnAwake = false;
         main.simulationSpace = ParticleSystemSimulationSpace.World;
-        main.maxParticles = maximumParticles;
+        main.maxParticles = maximumMarks;
         main.startSpeed = 0f;
-        main.startLifetime = particleDuration;
-        main.startSize = particleSize;
+
         var emission = particles.emission;
         emission.enabled = false;
         var shape = particles.shape;
         shape.enabled = false;
+
         var renderer = particles.GetComponent<ParticleSystemRenderer>();
         renderer.renderMode = ParticleSystemRenderMode.Billboard;
         renderer.shadowCastingMode = ShadowCastingMode.Off;
         renderer.receiveShadows = false;
+
         Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
         if (!shader) shader = Shader.Find("Particles/Standard Unlit");
         if (!shader) return;
+
+        softParticleTexture = CreateSoftParticleTexture();
         runtimeMaterial = new Material(shader) { name = name + "_ScentRuntime" };
         runtimeMaterial.SetColor("_BaseColor", Color.white);
+        runtimeMaterial.SetTexture("_BaseMap", softParticleTexture);
+        runtimeMaterial.SetTexture("_MainTex", softParticleTexture);
+        runtimeMaterial.SetFloat("_Surface", 1f);
+        runtimeMaterial.SetOverrideTag("RenderType", "Transparent");
+        runtimeMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        runtimeMaterial.renderQueue = (int)RenderQueue.Transparent;
         renderer.sharedMaterial = runtimeMaterial;
+    }
+
+    private static Texture2D CreateSoftParticleTexture()
+    {
+        const int size = 32;
+        var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+        {
+            name = "ScentSoftCircle_Runtime",
+            filterMode = FilterMode.Bilinear,
+            wrapMode = TextureWrapMode.Clamp
+        };
+
+        var pixels = new Color[size * size];
+        Vector2 center = new Vector2((size - 1) * 0.5f, (size - 1) * 0.5f);
+        float radius = size * 0.5f;
+        for (int y = 0; y < size; y++)
+        for (int x = 0; x < size; x++)
+        {
+            float distance = Vector2.Distance(new Vector2(x, y), center) / radius;
+            float alpha = Mathf.SmoothStep(1f, 0f, distance);
+            pixels[y * size + x] = new Color(1f, 1f, 1f, alpha * alpha);
+        }
+
+        texture.SetPixels(pixels);
+        texture.Apply(false, true);
+        return texture;
     }
 
     private void OnDisable()
@@ -125,5 +327,6 @@ public sealed class ScentTrailPath : MonoBehaviour
     private void OnDestroy()
     {
         if (runtimeMaterial) Destroy(runtimeMaterial);
+        if (softParticleTexture) Destroy(softParticleTexture);
     }
 }
