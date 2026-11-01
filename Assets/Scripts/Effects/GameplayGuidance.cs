@@ -364,7 +364,19 @@ public sealed class GameplayGuidance : MonoBehaviour
     public void OnKitchenCompleted()
     {
         ChangeContext();
-        Tell("return", "¡SEGUÍ A TUS DUEÑOS!", "Acompañalos de regreso al dormitorio.");
+        Tell("return", "¡SEGUÍ A TUS DUEÑOS!", "Seguilos.");
+    }
+
+    public void OnClosingBarkRequested()
+    {
+        ChangeContext();
+        Tell("closing-bark", "¡LADRÁ UNA VEZ MÁS!", "B (teclado) / □ (PlayStation)",
+            priority: 3);
+    }
+
+    public void OnClosingBarkCancelled()
+    {
+        ChangeContext();
     }
 
     public void OnClosingStarted()

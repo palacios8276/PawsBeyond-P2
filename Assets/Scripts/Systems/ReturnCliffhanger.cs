@@ -25,12 +25,15 @@ public sealed class ReturnCliffhanger : MonoBehaviour
     [SerializeField] private UnityEvent onGlowStarted = new UnityEvent();
     [SerializeField] private UnityEvent onFigureRevealed = new UnityEvent();
     [SerializeField] private UnityEvent onContinueShown = new UnityEvent();
+    [SerializeField] private UnityEvent onBarkRequested = new UnityEvent();
+    [SerializeField] private UnityEvent onBarkOpportunityEnded = new UnityEvent();
     private BoxCollider zone;
-    private bool playerInside, ownersArrived, closingRequested;
+    private bool playerInside, ownersArrived, closingRequested, barkPromptShown;
     public int TriggerCount { get; private set; }
     public bool IsComplete { get; private set; }
     public bool IsEligible => progression.CurrentEpisode == NarrativeEpisode.ReturnAndClosing
         && kitchen.Step == KitchenEpisodeStep.Complete && ownersArrived;
+    public bool IsAwaitingBark => !closingRequested && TriggerCount == 0 && playerInside && IsEligible;
     private void Awake()
     {
         zone = GetComponent<BoxCollider>();
@@ -57,7 +60,13 @@ public sealed class ReturnCliffhanger : MonoBehaviour
     }
     private void OnTriggerExit(Collider other)
     {
-        if (IsPlayer(other)) playerInside = false;
+        if (!IsPlayer(other)) return;
+        playerInside = false;
+        if (barkPromptShown && !closingRequested)
+        {
+            barkPromptShown = false;
+            onBarkOpportunityEnded.Invoke();
+        }
     }
     private bool IsPlayer(Collider other)
     {
@@ -85,7 +94,13 @@ public sealed class ReturnCliffhanger : MonoBehaviour
     }
     private void TryRequestClosing()
     {
-        if (closingRequested || TriggerCount != 0 || !playerInside || !IsEligible) return;
+        if (!IsAwaitingBark || barkPromptShown) return;
+        barkPromptShown = true;
+        onBarkRequested.Invoke();
+    }
+    public void TryBeginClosingFromBark()
+    {
+        if (!IsAwaitingBark) return;
         closingRequested = true;
         progression.RequestClosing();
     }
