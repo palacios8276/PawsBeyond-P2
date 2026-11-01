@@ -9,6 +9,8 @@ public class BasketDrag : MonoBehaviour
     [SerializeField, Range(0.1f, 0.9f)] private float liftPortion = 0.55f;
     [Header("Sujeción")]
     [SerializeField] private Vector3 heldOffset = new Vector3(0f, 0.12f, 0f);
+    [SerializeField] private bool preserveGrabRotation = true;
+    [SerializeField] private Vector3 heldEulerOffset;
     [SerializeField, Min(0f)] private float obstaclePadding = 0.025f;
 
     private Rigidbody body;
@@ -68,7 +70,9 @@ public class BasketDrag : MonoBehaviour
         extractionStart = body.position;
         extractionPeak = extractionStart + Vector3.up * extractionHeight;
         extractionStartRotation = body.rotation;
-        heldRotationOffset = Quaternion.Inverse(holder.rotation) * body.rotation;
+        heldRotationOffset = preserveGrabRotation
+            ? Quaternion.Inverse(holder.rotation) * body.rotation
+            : Quaternion.Euler(heldEulerOffset);
         extractionElapsed = 0f;
         extracting = true;
         HasBeenDragged = true;

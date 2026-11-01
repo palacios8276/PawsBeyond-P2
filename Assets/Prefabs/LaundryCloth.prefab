@@ -151,10 +151,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d95a8c46df75bfa4dafe5b073000f86b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  followStrength: 12
-  maxSpeed: 7
-  breakDistance: 4
-  carryHeight: 0.55
+  extractionDuration: 0.28
+  extractionHeight: 0.45
+  liftPortion: 0.55
+  heldOffset: {x: 0, y: -0.02, z: 0.34}
+  preserveGrabRotation: 0
+  heldEulerOffset: {x: 0, y: 0, z: 90}
+  obstaclePadding: 0.025
 --- !u!82 &6599609064248524938
 AudioSource:
   m_ObjectHideFlags: 0
