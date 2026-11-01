@@ -9,6 +9,7 @@ public sealed class ContextualCameraDirector : MonoBehaviour
     [SerializeField] private CinemachineCamera gameplayCamera;
     [SerializeField] private CinemachineCamera abductionCamera;
     [SerializeField] private CinemachineCamera alienReactionCamera;
+    [SerializeField] private CinemachineBrain brain;
     [SerializeField] private int inactivePriority = -10;
     [SerializeField] private int activePriority = 30;
 
@@ -21,6 +22,7 @@ public sealed class ContextualCameraDirector : MonoBehaviour
     [SerializeField, Min(0.1f)] private float abductionSafetyTimeout = 7f;
     [SerializeField, Min(0.1f)] private float alienReactionSeconds = 0.85f;
     [SerializeField, Min(0f)] private float returnBlendSeconds = 0.25f;
+    [SerializeField, Min(0.1f)] private float returnBlendSafetyTimeout = 3f;
 
     [Header("Controles temporales")]
     [Tooltip("Lectores de órbita comunes a todas las cámaras contextuales.")]
@@ -41,6 +43,7 @@ public sealed class ContextualCameraDirector : MonoBehaviour
 
     private void Awake()
     {
+        if (!brain && Camera.main) brain = Camera.main.GetComponent<CinemachineBrain>();
         SetPriority(abductionCamera, inactivePriority);
         SetPriority(alienReactionCamera, inactivePriority);
     }
@@ -97,8 +100,16 @@ public sealed class ContextualCameraDirector : MonoBehaviour
     private IEnumerator EndSequence()
     {
         SetPriority(activeCamera, inactivePriority);
-        float endAt = Time.unscaledTime + returnBlendSeconds;
-        while (Time.unscaledTime < endAt) yield return null;
+        float minimumEndAt = Time.unscaledTime + returnBlendSeconds;
+        float timeoutAt = Time.unscaledTime + returnBlendSafetyTimeout;
+        while (Time.unscaledTime < timeoutAt)
+        {
+            bool minimumElapsed = Time.unscaledTime >= minimumEndAt;
+            bool gameplayHasControl = !brain ||
+                (!brain.IsBlending && brain.ActiveVirtualCamera == gameplayCamera);
+            if (minimumElapsed && gameplayHasControl) break;
+            yield return null;
+        }
 
         RestoreControls();
         activeCamera = null;
