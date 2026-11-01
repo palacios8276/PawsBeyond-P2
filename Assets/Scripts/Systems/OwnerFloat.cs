@@ -10,15 +10,25 @@ public class OwnerFloat : MonoBehaviour
     [SerializeField, Min(0.1f)] private float reactionDuration = 0.5f;
     private float reactionRemaining;
     public void ReactToBarks() => reactionRemaining = reactionDuration;
+    private OwnersJourney journey;
     private Vector3 startPosition;
     private Quaternion startRotation;
     private void Start()
     {
+        journey = GetComponentInParent<OwnersJourney>();
         startPosition = transform.localPosition;
         startRotation = transform.localRotation;
     }
     private void Update()
     {
+        if (journey && !journey.HasStarted)
+        {
+            reactionRemaining = 0f;
+            transform.localPosition = startPosition;
+            transform.localRotation = startRotation;
+            return;
+        }
+
         reactionRemaining = Mathf.Max(0f, reactionRemaining - Time.deltaTime);
         float reaction = Mathf.Sin(Mathf.PI * reactionRemaining / reactionDuration) * reactionHeight;
         float phase = Time.time * floatSpeed + phaseOffset;
