@@ -25,7 +25,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField, Min(0.1f)] private float hearingRange = 4.5f;
     [SerializeField, Range(0f, 90f)] private float hearingAngle = 65f;
     [Header("Ladridos válidos para ahuyentar: cada emisión cuenta una vez")]
-    [SerializeField, Min(1)] private int firstEncounterBarks = 4;
+    [SerializeField, Min(1)] private int firstEncounterBarks = 3;
     [SerializeField, Min(1)] private int hiddenEncounterBarks = 3;
     [SerializeField, Min(1)] private int repairBarks = 3;
     [SerializeField] private int currentBarkCount;
