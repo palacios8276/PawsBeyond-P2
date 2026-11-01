@@ -28,13 +28,16 @@ public sealed class BedroomShutter : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (released && !attachedToy.IsHeld) EnsureReleasedToyFalls();
         if (!armed || IsClosed) return;
         if (!released && attachedToy.HasBeenDragged &&
             Vector3.Distance(attachedToy.transform.position, toyStart) >= releaseDistance)
         {
             released = true;
             if (cord) cord.SetActive(false);
-            attachedToy.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+            var toyBody = attachedToy.GetComponent<Rigidbody>();
+            toyBody.constraints = RigidbodyConstraints.None;
+            toyBody.useGravity = true;
             shutter.isKinematic = false;
             shutter.WakeUp();
         }
@@ -46,5 +49,14 @@ public sealed class BedroomShutter : MonoBehaviour
         IsClosed = true;
         if (closureAudio && closureAudio.clip) closureAudio.Play();
         onClosed.Invoke();
+    }
+
+    private void EnsureReleasedToyFalls()
+    {
+        var body = attachedToy.GetComponent<Rigidbody>();
+        body.constraints = RigidbodyConstraints.None;
+        body.isKinematic = false;
+        body.useGravity = true;
+        body.WakeUp();
     }
 }

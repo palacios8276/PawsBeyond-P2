@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-public enum KitchenAlienState { Inactive, Appearing, Throwing, Provoking, WaitingForBark, Startled, ReleasingShutter, Running, Repairing, Finished, Hiding, Crawling, ThrowingOtherHand }
+public enum KitchenAlienState { Inactive, Appearing, Throwing, Provoking, WaitingForBark, Startled, ReleasingShutter, Running, Repairing, Finished, Hiding, Crawling, ThrowingOtherHand, Investigating }
 
 [RequireComponent(typeof(CharacterController))]
 public sealed class KitchenAlien : MonoBehaviour
@@ -12,6 +12,8 @@ public sealed class KitchenAlien : MonoBehaviour
     [SerializeField] private Transform repairTarget;
     [SerializeField] private Transform otherHand;
     [SerializeField] private RemoteControlFeedback remoteControl;
+    [SerializeField] private AlienNavMeshMotor navigation;
+    [SerializeField, Min(0.1f)] private float investigationStoppingDistance = 0.75f;
     [SerializeField, Min(0.1f)] private float runSpeed = 6.5f;
     [SerializeField, Min(0.1f)] private float startleSeconds = 0.45f;
     [SerializeField] private UnityEvent onStateChanged = new UnityEvent();
@@ -41,6 +43,7 @@ public sealed class KitchenAlien : MonoBehaviour
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
+        if (!navigation) navigation = GetComponent<AlienNavMeshMotor>();
         visualStart = visual.localPosition;
     }
 
@@ -78,6 +81,11 @@ public sealed class KitchenAlien : MonoBehaviour
             Throws++;
             onToyReleased.Invoke();
         }
+        if (navigation && landing)
+        {
+            SetState(KitchenAlienState.Investigating);
+            yield return navigation.NavigateNear(landing.position, investigationStoppingDistance);
+        }
         SetState(KitchenAlienState.Provoking);
     }
 
@@ -105,12 +113,14 @@ public sealed class KitchenAlien : MonoBehaviour
         }
     }
 
-    public IEnumerator EscapeWindow(Transform staging, Transform outside, Transform departure)
+    public IEnumerator EscapeWindow(Transform staging, Transform outside, Transform departure,
+        Collider passageBlocker = null)
     {
         SetState(KitchenAlienState.Crawling);
         float height = controller.height;
         Vector3 center = controller.center;
         float step = controller.stepOffset;
+        if (passageBlocker) Physics.IgnoreCollision(controller, passageBlocker, true);
         controller.height = 0.7f; controller.center = Vector3.up * 0.35f; controller.stepOffset = 0.1f;
         visual.localScale = new Vector3(1f, 0.55f, 1f);
         foreach (var target in new[] { staging, outside, departure })
@@ -126,6 +136,7 @@ public sealed class KitchenAlien : MonoBehaviour
         }
         visual.localScale = Vector3.one;
         controller.height = height; controller.center = center; controller.stepOffset = step;
+        if (passageBlocker) Physics.IgnoreCollision(controller, passageBlocker, false);
     }
 
     public IEnumerator RetreatExterior(Transform destination)
@@ -172,6 +183,11 @@ public sealed class KitchenAlien : MonoBehaviour
     public IEnumerator Travel(Transform[] route, bool avoidCharacters = false, bool optionalWaypoints = false)
     {
         SetState(KitchenAlienState.Running);
+        if (navigation && navigation.PrepareRoute(route))
+        {
+            yield return navigation.TravelPreparedRoute();
+            if (navigation.LastNavigationSucceeded) yield break;
+        }
         foreach (var point in route)
         {
             if (!point) continue;

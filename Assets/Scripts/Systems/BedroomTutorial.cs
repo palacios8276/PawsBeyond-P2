@@ -21,6 +21,7 @@ public sealed class BedroomTutorial : MonoBehaviour
     [SerializeField] private OwnerFloat[] owners;
     [Header("Ayudas y ritmo")]
     [SerializeField] private TMP_Text hint;
+    [SerializeField] private GameplayGuidance guidance;
     [SerializeField] private GameObject hintPanel;
     [SerializeField] private Vector3 roomCenter = new Vector3(-18f, 0f, 0f);
     [SerializeField] private Vector2 roomHalfSize = new Vector2(6f, 4f);
@@ -59,7 +60,7 @@ public sealed class BedroomTutorial : MonoBehaviour
     {
         if (interaction) { interaction.OnObjectGrabbed.RemoveListener(OnGrabbed); interaction.OnObjectReleased.RemoveListener(OnReleased); }
         RestoreHighlight();
-        if (hintPanel) hintPanel.SetActive(false);
+        if (!guidance && hintPanel) hintPanel.SetActive(false);
     }
 
     private bool InRoom() => Mathf.Abs(player.position.x - roomCenter.x) <= roomHalfSize.x &&
@@ -70,7 +71,7 @@ public sealed class BedroomTutorial : MonoBehaviour
         bool inRoom = InRoom();
         if (inRoom && !wasInRoom) hintUntil = Time.time + hintSeconds;
         wasInRoom = inRoom;
-        if (hintPanel) hintPanel.SetActive(inRoom && Time.time < hintUntil && step != BedroomTutorialStep.Complete);
+        if (!guidance && hintPanel) hintPanel.SetActive(inRoom && Time.time < hintUntil && step != BedroomTutorialStep.Complete);
         if (step == BedroomTutorialStep.Abduction)
         {
             journey.transform.position = Vector3.MoveTowards(journey.transform.position, abductionTarget.position, abductionSpeed * Time.deltaTime);
@@ -132,7 +133,8 @@ public sealed class BedroomTutorial : MonoBehaviour
         RestoreHighlight();
         step = next;
         hintUntil = Time.time + hintSeconds;
-        if (hint) hint.text = Message(next);
+        if (guidance) guidance.PresentTutorialStep(next);
+        else if (hint) hint.text = Message(next);
         Renderer target = next == BedroomTutorialStep.FirstToy || next == BedroomTutorialStep.DropFirst ? firstHighlight
             : next == BedroomTutorialStep.SecondToy || next == BedroomTutorialStep.DropSecond ? secondHighlight
             : next == BedroomTutorialStep.ThirdToy || next == BedroomTutorialStep.Shutter ? thirdHighlight : null;

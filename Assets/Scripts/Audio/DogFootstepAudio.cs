@@ -7,6 +7,8 @@ public sealed class DogFootstepAudio : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip[] variants;
     [SerializeField, Min(0.1f)] private float stepDistance = 0.8f;
+    [SerializeField, Min(0.1f)] private float runningSpeedThreshold = 3.5f;
+    [SerializeField, Range(0.4f, 1f)] private float runningStepDistanceMultiplier = 0.72f;
     [SerializeField, Min(0.05f)] private float minimumInterval = 0.16f;
     [SerializeField, Min(0f)] private float minimumSpeed = 0.12f;
     [SerializeField] private Vector2 pitchRange = new Vector2(0.95f, 1.05f);
@@ -31,18 +33,25 @@ public sealed class DogFootstepAudio : MonoBehaviour
         previousPosition = position;
         delta.y = 0f;
         float travel = delta.magnitude;
+        float speed = Time.deltaTime > 0f ? travel / Time.deltaTime : 0f;
         // Ignora reposo, caída y traslados bruscos de prueba/carga de escena.
         if (Time.deltaTime <= 0f || !controller.isGrounded || travel > 2f
-            || travel / Time.deltaTime < minimumSpeed)
-        { distance = 0f; return; }
+            || speed < minimumSpeed)
+        {
+            distance = 0f;
+            if (audioSource.isPlaying) audioSource.Stop();
+            return;
+        }
         distance += travel;
-        if (distance < stepDistance || Time.time < nextStepTime || audioSource.isPlaying
+        float currentStepDistance = speed >= runningSpeedThreshold
+            ? stepDistance * runningStepDistanceMultiplier : stepDistance;
+        if (distance < currentStepDistance || Time.time < nextStepTime || audioSource.isPlaying
             || variants == null || variants.Length == 0) return;
         int index = variants.Length == 1 ? 0 : lastVariant < 0 ? random.Next(variants.Length)
             : (lastVariant + 1 + random.Next(variants.Length - 1)) % variants.Length;
         if (!variants[index]) return;
         lastVariant = index;
-        distance %= stepDistance;
+        distance %= currentStepDistance;
         nextStepTime = Time.time + minimumInterval;
         audioSource.pitch = Mathf.Lerp(pitchRange.x, pitchRange.y, (float)random.NextDouble());
         audioSource.volume = baseVolume * Mathf.Lerp(0.94f, 1.06f, (float)random.NextDouble());

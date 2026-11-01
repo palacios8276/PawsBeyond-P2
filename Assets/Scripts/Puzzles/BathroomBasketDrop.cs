@@ -55,6 +55,8 @@ public class BathroomBasketDrop : MonoBehaviour
     public bool IsBasketRemoved { get; private set; }
     public int RemovedClothesCount { get; private set; }
     public bool IsAwaitingBark => ownersArrived && initialized && !activated && beamController && beamController.IsBeamActive;
+    public event System.Action AccidentStarted;
+    public event System.Action ClothesReady;
     public bool IsActivated => activated;
     public bool IsReady => ready;
     public Rigidbody ActiveBasket => laundryBasketRigidbody;
@@ -112,6 +114,7 @@ public class BathroomBasketDrop : MonoBehaviour
         Vector3 half = playerZone.size * 0.5f;
         if (Mathf.Abs(local.x) > half.x || Mathf.Abs(local.y) > half.y || Mathf.Abs(local.z) > half.z) return;
         activated = true;
+        AccidentStarted?.Invoke();
         StartCoroutine(DropLaundry());
     }
 
@@ -157,6 +160,7 @@ public class BathroomBasketDrop : MonoBehaviour
         yield return new WaitForSeconds(0.9f);
         if (interferenceLight) interferenceLight.enabled = false;
         ready = true;
+        ClothesReady?.Invoke();
 
         Debug.Log("Bathroom: remove the clothes with Interact to free the door.", this);
     }
