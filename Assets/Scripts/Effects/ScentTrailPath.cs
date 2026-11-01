@@ -24,6 +24,11 @@ public sealed class ScentTrailPath : MonoBehaviour
     [SerializeField, Range(0.5f, 2f)] private float colorBrightness = 1.12f;
     [SerializeField, Range(0f, 0.35f)] private float softHaloOpacity = 0.12f;
     [SerializeField, Range(1f, 2.5f)] private float softHaloScale = 1.65f;
+    [Header("Legibilidad contextual por distancia real")]
+    [SerializeField, Min(0f)] private float contextualDistanceThreshold = 6f;
+    [SerializeField, Min(0.1f)] private float contextualMaximumDistance = 14f;
+    [SerializeField, Range(1f, 1.75f)] private float distantBrightnessMultiplier = 1.28f;
+    [SerializeField, Min(0.1f)] private float brightnessTransitionSpeed = 2.5f;
     [SerializeField, Min(0.05f)] private float refreshSeconds = 0.15f;
     [SerializeField, Min(1)] private int maximumMarks = 48;
     [SerializeField, Min(0.5f)] private float teleportThreshold = 3f;
@@ -58,11 +63,13 @@ public sealed class ScentTrailPath : MonoBehaviour
     private Material runtimeMaterial;
     private Texture2D softParticleTexture;
     private float nextRefresh;
+    private float contextualBrightness = 1f;
 
     public int RecordedMarkCount => marks.Count;
     public int VisibleSampleCount { get; private set; }
     public bool IsScentEnabled => scentEnabled;
     public ScentTrailKind Kind => scentKind;
+    public float ContextualBrightness => contextualBrightness;
 
     private float ActiveDuration => scentKind == ScentTrailKind.Human ? humanDuration : alienDuration;
     private Color ActiveColor => scentKind == ScentTrailKind.Human ? humanColor : alienColor;
@@ -90,6 +97,7 @@ public sealed class ScentTrailPath : MonoBehaviour
 
         TrackRealMovement();
         RemoveExpiredMarks();
+        UpdateContextualBrightness();
 
         if (!observer || Time.time < nextRefresh) return;
         nextRefresh = Time.time + refreshSeconds;
@@ -235,9 +243,10 @@ public sealed class ScentTrailPath : MonoBehaviour
             float proximity = 1f - Mathf.Sqrt(distanceSqr) / visibleRange;
             float fade = (1f - age01) * Mathf.SmoothStep(0.15f, 1f, proximity);
             Color color = baseColor;
-            color.r *= colorBrightness;
-            color.g *= colorBrightness;
-            color.b *= colorBrightness;
+            float effectiveBrightness = colorBrightness * contextualBrightness;
+            color.r *= effectiveBrightness;
+            color.g *= effectiveBrightness;
+            color.b *= effectiveBrightness;
             color.a *= intensity * fade;
             if (color.a <= 0.01f) continue;
 
@@ -270,6 +279,35 @@ public sealed class ScentTrailPath : MonoBehaviour
             }
             VisibleSampleCount++;
         }
+    }
+
+    private void UpdateContextualBrightness()
+    {
+        float nearestDistance = 0f;
+        bool foundEmitter = false;
+        if (observer)
+        {
+            foreach (EmitterTracker tracker in trackers)
+            {
+                if (!tracker.Source || !tracker.Source.gameObject.activeInHierarchy) continue;
+                float distance = Vector3.Distance(observer.position, tracker.Source.position);
+                if (!foundEmitter || distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    foundEmitter = true;
+                }
+            }
+        }
+
+        float target = 1f;
+        if (foundEmitter && nearestDistance > contextualDistanceThreshold)
+        {
+            float maximum = Mathf.Max(contextualDistanceThreshold + 0.1f, contextualMaximumDistance);
+            float distance01 = Mathf.InverseLerp(contextualDistanceThreshold, maximum, nearestDistance);
+            target = Mathf.Lerp(1f, distantBrightnessMultiplier, distance01);
+        }
+        contextualBrightness = Mathf.MoveTowards(contextualBrightness, target,
+            brightnessTransitionSpeed * Time.deltaTime * Mathf.Max(0.01f, distantBrightnessMultiplier - 1f));
     }
 
     private void CreateParticleRenderer()
