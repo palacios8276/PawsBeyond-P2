@@ -3,6 +3,8 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class BasketDrag : MonoBehaviour
 {
+    public enum DragState { Free, Extracting, Held, Releasing }
+
     [Header("Recogida hacia el hocico")]
     [SerializeField, Min(0.05f)] private float extractionDuration = 0.28f;
     [SerializeField, Min(0f)] private float extractionHeight = 0.45f;
@@ -20,15 +22,15 @@ public class BasketDrag : MonoBehaviour
     private Vector3 extractionStart, extractionPeak;
     private Quaternion extractionStartRotation, heldRotationOffset;
     private float extractionElapsed;
-    private bool extracting;
-    private bool previousUseGravity, previousDetectCollisions, previousIsKinematic;
-    private RigidbodyConstraints previousConstraints;
+    private bool previousDetectCollisions;
     private CollisionDetectionMode previousCollisionMode;
     private RigidbodyInterpolation previousInterpolation;
     private InteractableHighlight highlight;
-    public bool IsHeld => holder != null;
-    public bool IsExtracting => IsHeld && extracting;
-    public bool CanBeGrabbed => body && !body.isKinematic && !IsHeld;
+    private DragState state;
+    public DragState State => state;
+    public bool IsHeld => state == DragState.Extracting || state == DragState.Held;
+    public bool IsExtracting => state == DragState.Extracting;
+    public bool CanBeGrabbed => body && !body.isKinematic && state == DragState.Free;
     public bool HasBeenDragged { get; private set; }
 
     private void Awake()
@@ -46,11 +48,8 @@ public class BasketDrag : MonoBehaviour
 
     public bool Grab(Transform player, Transform grip)
     {
-        if (body.isKinematic || IsHeld) return false;
-        previousIsKinematic = body.isKinematic;
-        previousUseGravity = body.useGravity;
+        if (body.isKinematic || state != DragState.Free) return false;
         previousDetectCollisions = body.detectCollisions;
-        previousConstraints = body.constraints;
         previousCollisionMode = body.collisionDetectionMode;
         previousInterpolation = body.interpolation;
 
@@ -74,7 +73,7 @@ public class BasketDrag : MonoBehaviour
             ? Quaternion.Inverse(holder.rotation) * body.rotation
             : Quaternion.Euler(heldEulerOffset);
         extractionElapsed = 0f;
-        extracting = true;
+        state = DragState.Extracting;
         HasBeenDragged = true;
         if (highlight) highlight.SetHighlighted(false);
         return true;
@@ -88,23 +87,25 @@ public class BasketDrag : MonoBehaviour
     public void Release()
     {
         if (!IsHeld) return;
+        state = DragState.Releasing;
         SetPlayerCollisions(false);
+        holder = null;
         if (body)
         {
-            body.detectCollisions = previousDetectCollisions;
-            body.isKinematic = previousIsKinematic;
-            body.useGravity = previousUseGravity;
-            body.constraints = previousConstraints &
-                ~(RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ);
+            // Todo BasketDrag recogible vuelve a ser un cuerpo libre. Restaurar constraints
+            // previos dejaba prendas verticales y juguetes suspendidos tras soltarlos.
+            body.detectCollisions = true;
+            body.isKinematic = false;
+            body.useGravity = true;
+            body.constraints = RigidbodyConstraints.None;
             body.collisionDetectionMode = previousCollisionMode;
             body.interpolation = previousInterpolation;
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
             body.WakeUp();
         }
-        holder = null;
-        extracting = false;
         playerColliders = null;
+        state = DragState.Free;
     }
 
     private void SetPlayerCollisions(bool ignore)
@@ -117,10 +118,10 @@ public class BasketDrag : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!holder) return;
+        if (!holder || !IsHeld) return;
         Vector3 target = holder.TransformPoint(heldOffset);
         Quaternion targetRotation = holder.rotation * heldRotationOffset;
-        if (extracting)
+        if (state == DragState.Extracting)
         {
             extractionElapsed += Time.fixedDeltaTime;
             float normalized = Mathf.Clamp01(extractionElapsed / extractionDuration);
@@ -139,7 +140,7 @@ public class BasketDrag : MonoBehaviour
             body.MoveRotation(Quaternion.Slerp(extractionStartRotation, targetRotation,
                 Mathf.SmoothStep(0f, 1f, normalized)));
             if (normalized < 1f) return;
-            extracting = false;
+            state = DragState.Held;
             body.detectCollisions = previousDetectCollisions;
         }
 
