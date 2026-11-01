@@ -364,7 +364,7 @@ public sealed class GameplayGuidance : MonoBehaviour
     public void OnKitchenCompleted()
     {
         ChangeContext();
-        Tell("return", "¡SEGUÍ A TUS DUEÑOS!", "Seguilos.");
+        Tell("return", "SEGUÍ A TUS PADRES", "", priority: 1);
     }
 
     public void OnClosingBarkRequested()
