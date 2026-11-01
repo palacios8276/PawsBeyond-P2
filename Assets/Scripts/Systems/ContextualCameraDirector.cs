@@ -23,6 +23,8 @@ public sealed class ContextualCameraDirector : MonoBehaviour
     [SerializeField, Min(0f)] private float returnBlendSeconds = 0.25f;
 
     [Header("Controles temporales")]
+    [Tooltip("Lectores de órbita comunes a todas las cámaras contextuales.")]
+    [SerializeField] private MonoBehaviour[] orbitControls;
     [SerializeField] private MonoBehaviour[] abductionControls;
     [SerializeField] private MonoBehaviour[] alienReactionControls;
 
@@ -86,7 +88,9 @@ public sealed class ContextualCameraDirector : MonoBehaviour
     private void BeginSequence(CinemachineCamera camera, MonoBehaviour[] controls)
     {
         activeCamera = camera;
-        SaveAndDisable(controls);
+        savedControlStates.Clear();
+        SaveAndDisable(orbitControls, false);
+        SaveAndDisable(controls, false);
         SetPriority(camera, activePriority);
     }
 
@@ -101,9 +105,9 @@ public sealed class ContextualCameraDirector : MonoBehaviour
         activeSequence = null;
     }
 
-    private void SaveAndDisable(MonoBehaviour[] controls)
+    private void SaveAndDisable(MonoBehaviour[] controls, bool clearSaved = true)
     {
-        savedControlStates.Clear();
+        if (clearSaved) savedControlStates.Clear();
         if (controls == null) return;
 
         foreach (MonoBehaviour control in controls)
