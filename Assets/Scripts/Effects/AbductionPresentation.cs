@@ -66,6 +66,12 @@ public sealed class AbductionPresentation : MonoBehaviour
     [SerializeField, Range(0f, 0.8f)] private float barkWidthKick = 0.55f;
     [SerializeField, Range(0f, 0.2f)] private float barkLateralKick = 0.12f;
     [SerializeField] private Color barkResponseColor = new Color(1f, 0.85f, 0.45f, 0.6f);
+    [Header("Falla del segundo rayo de sala")]
+    [SerializeField, Min(0.2f)] private float secondRayFailureSeconds = 1.5f;
+    [SerializeField, Min(1f)] private float secondRayFlickerHz = 12f;
+    [SerializeField] private Color secondRayFailureColor = new Color(1f, 0.18f, 0.05f, 0.75f);
+    [SerializeField] private AudioSource secondRayFailureAudio;
+    [SerializeField] private WorldComicFeedback secondRayFailureComic;
     [Header("Estados: mismo orden que AbductionBeamState")]
     [SerializeField] private BeamPresentationStyle[] styles =
     {
@@ -87,6 +93,8 @@ public sealed class AbductionPresentation : MonoBehaviour
     private float accompanyingVisibility;
     private Transform currentWindow;
     private bool currentBlocked, currentBedroom, currentBathroom, currentKitchen, ready;
+    private float secondRayFailureStartedAt = float.NegativeInfinity;
+    private bool secondRayFailed;
     private Color displayedColor;
     private Light[] existingLights;
     private Color[] originalLightColors;
@@ -133,6 +141,14 @@ public sealed class AbductionPresentation : MonoBehaviour
         ? Mathf.Clamp01(1f - (Time.time - acceptedBarkAt) / Mathf.Max(0.1f, barkFeedbackSeconds)) : 0f;
     private void OnInterferenceAccepted() => acceptedBarkAt = Time.time;
 
+    public void PlaySecondRayFailure()
+    {
+        if (!ready || secondRayFailed || Time.time - secondRayFailureStartedAt < secondRayFailureSeconds) return;
+        secondRayFailureStartedAt = Time.time;
+        if (secondRayFailureAudio && secondRayFailureAudio.clip) secondRayFailureAudio.Play();
+        if (secondRayFailureComic) secondRayFailureComic.ShowMessage("¡ERROR!");
+    }
+
     private void LateUpdate()
     {
         if (!ready) return;
@@ -154,6 +170,28 @@ public sealed class AbductionPresentation : MonoBehaviour
         float noise = Mathf.PerlinNoise(Time.time * 1.4f, 2.7f);
         float wave = 0.5f + 0.5f * Mathf.Sin(Time.time * style.pulseHz * Mathf.PI * 2f + noise * style.irregularity * 3f);
         float feedback = BarkFeedback;
+        float failureProgress = Mathf.Clamp01((Time.time - secondRayFailureStartedAt) /
+            Mathf.Max(0.2f, secondRayFailureSeconds));
+        bool secondFailureActive = currentBlocked && failureProgress < 1f &&
+            secondRayFailureStartedAt > float.NegativeInfinity;
+        if (secondFailureActive)
+        {
+            float warmup = Mathf.InverseLerp(0f, 0.18f, failureProgress);
+            float shutdown = 1f - Mathf.InverseLerp(0.72f, 1f, failureProgress);
+            float flicker = Mathf.Sin(Time.time * secondRayFlickerHz * Mathf.PI * 2f) > -0.15f ? 1f : 0.12f;
+            weight *= Mathf.Lerp(1f, flicker, warmup) * shutdown;
+            displayedColor = Color.Lerp(displayedColor, secondRayFailureColor, warmup * shutdown);
+        }
+        else if (currentBlocked && secondRayFailureStartedAt > float.NegativeInfinity)
+        {
+            secondRayFailed = true;
+            weight = 0f;
+        }
+        else if (!currentBlocked)
+        {
+            secondRayFailed = false;
+            secondRayFailureStartedAt = float.NegativeInfinity;
+        }
         // La envolvente visual es independiente del audio y de la interferencia jugable.
         float energy = Mathf.Clamp(1f - style.pulseDepth * (1f - wave) - noise * style.irregularity * 0.1f
             + feedback * barkFeedbackGain, 0.18f, 1.4f);

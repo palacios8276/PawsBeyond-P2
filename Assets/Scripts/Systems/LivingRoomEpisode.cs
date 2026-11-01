@@ -14,6 +14,7 @@ public sealed class LivingRoomEpisode : MonoBehaviour
     [SerializeField] private UnityEvent onWindowAttempt = new UnityEvent();
     [SerializeField] private UnityEvent onRedirected = new UnityEvent();
     [SerializeField] private UnityEvent onWindowFocusShifted = new UnityEvent();
+    [SerializeField] private UnityEvent onBlockedAttemptStarted = new UnityEvent();
     private bool attempted, waitingForBarks, redirected, atBlockedWindow, completed;
     private float blockedUntil;
     public bool IsWaitingForBarks => waitingForBarks && !completed;
@@ -39,6 +40,7 @@ public sealed class LivingRoomEpisode : MonoBehaviour
             if (functionalWindowLight) functionalWindowLight.enabled = false;
             if (blockedWindowLight) blockedWindowLight.enabled = true;
             if (alienSilhouette) alienSilhouette.SetActive(false);
+            onBlockedAttemptStarted.Invoke();
         }
     }
 
