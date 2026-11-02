@@ -10,6 +10,7 @@ public sealed class DogModelAnimatorBridge : MonoBehaviour
     [SerializeField, Min(0f)] private float movementThreshold = 0.08f;
     [SerializeField, Min(0f)] private float runThreshold = 3.2f;
     [SerializeField, Min(0.05f)] private float barkDuration = 0.75f;
+    [SerializeField, Min(0f)] private float minimumBarkPoseSeconds = 0.16f;
     [SerializeField, Min(0f)] private float transitionDuration = 0.12f;
     [Header("Sincronización de locomoción")]
     [SerializeField, Min(0.1f)] private float walkReferenceSpeed = 2f;
@@ -30,6 +31,7 @@ public sealed class DogModelAnimatorBridge : MonoBehaviour
     private int observedBarkCount;
     private int currentState;
     private float barkEndsAt;
+    private float barkCanBeInterruptedAt;
     private Vector3 previousPosition;
     private bool hasPreviousPosition;
     public float CurrentPlanarSpeed { get; private set; }
@@ -64,13 +66,15 @@ public sealed class DogModelAnimatorBridge : MonoBehaviour
         {
             observedBarkCount = bark.BarkCount;
             barkEndsAt = Time.time + barkDuration;
+            barkCanBeInterruptedAt = Time.time + Mathf.Min(minimumBarkPoseSeconds, barkDuration);
             currentState = BarkState;
             animator.speed = 1f;
             animator.CrossFadeInFixedTime(BarkState, Mathf.Min(0.05f, transitionDuration), 0, 0f);
             return;
         }
 
-        if (Time.time < barkEndsAt) return;
+        if (Time.time < barkEndsAt &&
+            (Time.time < barkCanBeInterruptedAt || planarSpeed <= movementThreshold)) return;
 
         int desiredState = interaction && interaction.IsDragging
             ? CarryState
