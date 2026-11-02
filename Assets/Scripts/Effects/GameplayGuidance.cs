@@ -107,6 +107,13 @@ public sealed class GameplayGuidance : MonoBehaviour
         nextReminderAt = Time.unscaledTime + initialDuration + inactivitySeconds;
     }
 
+    private void CancelNotice(string id)
+    {
+        pending.RemoveAll(x => x.id == id);
+        if (reminder != null && reminder.id == id) reminder = null;
+        if (currentNotice != null && currentNotice.id == id) StopPresentation();
+    }
+
     private void Tell(string id, string heading, string body, ControlHint hint = ControlHint.None,
         int priority = 2, bool remindable = true)
     {
@@ -345,10 +352,16 @@ public sealed class GameplayGuidance : MonoBehaviour
             priority: 1, remindable: false);
     }
 
+    public void OnAlienEscapeStarted()
+    {
+        CancelNotice("alien-a-toy");
+    }
+
     public void OnAlienHidden()
     {
         ChangeContext();
-        Tell("hidden", "¡BUSCÁ AL ALIENÍGENA!", "Explorá y prestá atención a las pistas del entorno.");
+        Tell("hidden", "¡BUSCÁ AL ALIENÍGENA!", "Explorá y prestá atención a las pistas del entorno.",
+            priority: 3);
     }
 
     public void OnAlienDiscovered()
