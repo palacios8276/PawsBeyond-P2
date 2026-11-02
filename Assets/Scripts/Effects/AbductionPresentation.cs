@@ -58,6 +58,8 @@ public sealed class AbductionPresentation : MonoBehaviour
     [SerializeField, Min(0.05f)] private float floatSpeed = 0.65f;
     [SerializeField, Range(0f, 0.3f)] private float interferenceMotion = 0.1f;
     [SerializeField, Range(0f, 5f)] private float maximumTilt = 2f;
+    [SerializeField, Min(0.1f)] private float runningLightCyclesPerSecond = 1.35f;
+    [SerializeField, Range(0f, 1f)] private float runningLightMinimum = 0.22f;
     [Header("Iluminación y feedback")]
     [SerializeField, Min(0f)] private float ownerGlowIntensity = 6f;
     [SerializeField, Min(0f)] private float windowIntensity = 5f, shipLightIntensity = 1.5f;
@@ -87,6 +89,7 @@ public sealed class AbductionPresentation : MonoBehaviour
 
     private MaterialPropertyBlock shipBlock, beamBlock;
     private Color[] hullColors, hullEmission;
+    private bool[] runningLights;
     private float originalVolume, originalPitch, originalCutoff;
     private bool originalForceRenderingOff;
     private float visibility, acceptedBarkAt = float.NegativeInfinity;
@@ -118,10 +121,12 @@ public sealed class AbductionPresentation : MonoBehaviour
         // enabled y bounds siguen disponibles para ladridos y TV; solo se omite el dibujo.
         logicalVolume.forceRenderingOff = true;
         hullColors = new Color[shipRenderers.Length]; hullEmission = new Color[shipRenderers.Length];
+        runningLights = new bool[shipRenderers.Length];
         for (int i = 0; i < shipRenderers.Length; i++)
         {
             hullColors[i] = shipRenderers[i].sharedMaterial.GetColor("_BaseColor");
             hullEmission[i] = shipRenderers[i].sharedMaterial.GetColor("_EmissionColor");
+            runningLights[i] = shipRenderers[i].name.StartsWith("RunningLight_");
         }
         existingLights = new[] { ownerGlow, functionalWindowLight, blockedWindowLight };
         originalLightColors = new Color[existingLights.Length]; originalLightIntensities = new float[existingLights.Length];
@@ -244,8 +249,15 @@ public sealed class AbductionPresentation : MonoBehaviour
         {
             var r = shipRenderers[i]; r.enabled = weight > 0.005f;
             var color = hullColors[i]; color.a *= weight;
+            float lightGain = 1f;
+            if (runningLights[i])
+            {
+                float phase = Time.time * runningLightCyclesPerSecond * Mathf.PI * 2f
+                    - i * Mathf.PI * 0.25f;
+                lightGain = Mathf.Lerp(runningLightMinimum, 1.25f, 0.5f + 0.5f * Mathf.Sin(phase));
+            }
             shipBlock.Clear(); shipBlock.SetColor("_BaseColor", color);
-            shipBlock.SetColor("_EmissionColor", hullEmission[i] * energy * weight);
+            shipBlock.SetColor("_EmissionColor", hullEmission[i] * energy * weight * lightGain);
             r.SetPropertyBlock(shipBlock);
         }
     }
