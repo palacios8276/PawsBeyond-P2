@@ -117,7 +117,7 @@ public sealed class ContextualCameraDirector : MonoBehaviour
         {
             bool minimumElapsed = Time.unscaledTime >= minimumEndAt;
             bool gameplayHasControl = !brain ||
-                (!brain.IsBlending && brain.ActiveVirtualCamera == gameplayCamera);
+                (!brain.IsBlending && ReferenceEquals(brain.ActiveVirtualCamera, gameplayCamera));
             if (minimumElapsed && gameplayHasControl) break;
             yield return null;
         }
