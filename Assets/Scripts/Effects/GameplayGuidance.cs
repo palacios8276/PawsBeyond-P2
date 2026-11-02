@@ -339,6 +339,12 @@ public sealed class GameplayGuidance : MonoBehaviour
         Tell("alien-a", "¡AHUYENTÁ AL ALIENÍGENA!", "Acercate, miralo y ladrá hasta obligarlo a retirarse.", ControlHint.Bark);
     }
 
+    public void OnAlienAToyThrown()
+    {
+        Tell("alien-a-toy", "¿ME ESTÁ TIRANDO UN JUGUETE?", "¡Ahora no, estoy ocupado!",
+            priority: 1, remindable: false);
+    }
+
     public void OnAlienHidden()
     {
         ChangeContext();
