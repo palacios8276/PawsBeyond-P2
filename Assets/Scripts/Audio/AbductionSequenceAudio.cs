@@ -27,6 +27,12 @@ public sealed class AbductionSequenceAudio : MonoBehaviour
         audioSource.Play();
     }
 
+    public void PlaySequenceAt(Vector3 worldPosition)
+    {
+        transform.position = worldPosition;
+        PlaySequence();
+    }
+
     public void StopSequence()
     {
         if (!audioSource || !audioSource.isPlaying || fadeRoutine != null) return;

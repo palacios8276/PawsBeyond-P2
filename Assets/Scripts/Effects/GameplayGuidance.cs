@@ -323,7 +323,7 @@ public sealed class GameplayGuidance : MonoBehaviour
     private void OnClothesReady()
     {
         ChangeContext();
-        Tell("clothes", "¡SACÁ LAS TRES PRENDAS!", "Agarrá cada prenda, llevala lejos de la puerta y soltala.",
+        Tell("clothes", "PUERTA BLOQUEADA", "Sacá las prendas de la cesta para destrabar la puerta.",
             ControlHint.Interact);
     }
 
@@ -355,7 +355,7 @@ public sealed class GameplayGuidance : MonoBehaviour
     public void OnRepairStarted()
     {
         ChangeContext();
-        Tell("repair", "¡INTERRUMPÍ LA REPARACIÓN!", "Acercate al operador del control remoto y ladrale.",
+        Tell("repair", "¿QUÉ ESTARÁ DICIENDO?", "¡Mejor le ladro!",
             ControlHint.Bark);
     }
 
