@@ -12,6 +12,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField] private PlayerBark playerBark;
     [SerializeField] private AbductionBeamController beam;
     [SerializeField] private KitchenAlien firstAlien, secondAlien;
+    [SerializeField] private AbductionSequenceAudio repairConnectionAudio;
     [SerializeField] private Rigidbody toyPrefab;
     [SerializeField] private Transform toyLanding;
     [SerializeField] private Transform[] hidingRoute, windowReturnRoute, secondExitRoute;
@@ -25,7 +26,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField, Min(0.1f)] private float hearingRange = 4.5f;
     [SerializeField, Range(0f, 90f)] private float hearingAngle = 65f;
     [Header("Ladridos válidos para ahuyentar: cada emisión cuenta una vez")]
-    [SerializeField, Min(1)] private int firstEncounterBarks = 4;
+    [SerializeField, Min(1)] private int firstEncounterBarks = 3;
     [SerializeField, Min(1)] private int hiddenEncounterBarks = 3;
     [SerializeField, Min(1)] private int repairBarks = 3;
     [SerializeField] private int currentBarkCount;
@@ -41,6 +42,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField] private UnityEvent onRepairInterrupted = new UnityEvent();
     [SerializeField] private UnityEvent onCompleted = new UnityEvent();
     private bool arrived, ownsBarkFocus, discovered;
+    private bool repairConnectionPlayed;
     private int consumedBark = -1;
     public KitchenEpisodeStep Step { get; private set; }
     public int AcceptedInterventions { get; private set; }
@@ -109,7 +111,8 @@ public sealed class KitchenEpisode : MonoBehaviour
         if (!CanHear(alien) || playerBark.BarkCount == consumedBark) return;
         if (Step == KitchenEpisodeStep.FirstEncounter && alien.State != KitchenAlienState.Provoking) return;
         if (Step == KitchenEpisodeStep.FirstHidden && alien.State != KitchenAlienState.Hiding) return;
-        if (Step == KitchenEpisodeStep.SecondEncounter || Step == KitchenEpisodeStep.Repairing && alien.State != KitchenAlienState.Repairing) return;
+        if ((Step == KitchenEpisodeStep.SecondEncounter || Step == KitchenEpisodeStep.Repairing) &&
+            alien.State != KitchenAlienState.Repairing) return;
         consumedBark = playerBark.BarkCount;
         AcceptedInterventions++;
         currentBarkCount++;
@@ -150,7 +153,16 @@ public sealed class KitchenEpisode : MonoBehaviour
         secondAlien.gameObject.SetActive(true);
         secondAlien.SetState(KitchenAlienState.Repairing);
         Step = KitchenEpisodeStep.Repairing;
+        currentBarkCount = 0;
+        consumedBark = -1;
+        ownsBarkFocus = true;
+        beam.SetInteractionFocus(secondAlien.ListeningPoint);
         secondAlien.SetRemoteActive(true);
+        if (!repairConnectionPlayed && repairConnectionAudio)
+        {
+            repairConnectionPlayed = true;
+            repairConnectionAudio.PlaySequenceAt(secondAlien.ListeningPoint.position);
+        }
         onRepairStarted.Invoke();
     }
 

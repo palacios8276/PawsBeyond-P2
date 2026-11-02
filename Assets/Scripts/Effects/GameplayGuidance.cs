@@ -20,6 +20,8 @@ public sealed class GameplayGuidance : MonoBehaviour
     [SerializeField] private EpisodeProgression progression;
     [SerializeField] private AbductionBeamController beam;
     [SerializeField] private BathroomBasketDrop bathroom;
+    [SerializeField] private ScentTrailPath humanScentTrail;
+    [SerializeField] private ContextualCameraDirector contextualCamera;
     [Header("Lectura y transición")]
     [SerializeField, FormerlySerializedAs("minimumReadSeconds"), Min(1f)] private float initialDuration = 3f;
     [SerializeField, Min(1f)] private float inactivitySeconds = 2.5f;
@@ -43,7 +45,9 @@ public sealed class GameplayGuidance : MonoBehaviour
     private Notice currentNotice, reminder;
     private int context;
     private bool closing, presentingReminder;
+    private bool humanScentNoticeRequested;
     private float lastActivityAt, nextReminderAt;
+    private Coroutine humanScentRoutine;
 
     public string CurrentNoticeId { get; private set; }
     public string CurrentObjective => reminder != null ? reminder.heading : "";
@@ -69,6 +73,7 @@ public sealed class GameplayGuidance : MonoBehaviour
     private void OnEnable()
     {
         if (beam) beam.InterferenceAccepted.AddListener(OnInterferenceAccepted);
+        if (humanScentTrail) humanScentTrail.FirstHumanTrailVisible += OnFirstHumanTrailVisible;
         if (bathroom)
         {
             bathroom.AccidentStarted += OnBathroomAccident;
@@ -318,7 +323,7 @@ public sealed class GameplayGuidance : MonoBehaviour
     private void OnClothesReady()
     {
         ChangeContext();
-        Tell("clothes", "¡SACÁ LAS TRES PRENDAS!", "Agarrá cada prenda, llevala lejos de la puerta y soltala.",
+        Tell("clothes", "PUERTA BLOQUEADA", "Sacá las prendas de la cesta para destrabar la puerta.",
             ControlHint.Interact);
     }
 
@@ -350,7 +355,7 @@ public sealed class GameplayGuidance : MonoBehaviour
     public void OnRepairStarted()
     {
         ChangeContext();
-        Tell("repair", "¡INTERRUMPÍ LA REPARACIÓN!", "Acercate al operador del control remoto y ladrale.",
+        Tell("repair", "¿QUÉ ESTARÁ DICIENDO?", "¡Mejor le ladro!",
             ControlHint.Bark);
     }
 
@@ -364,7 +369,27 @@ public sealed class GameplayGuidance : MonoBehaviour
     public void OnKitchenCompleted()
     {
         ChangeContext();
-        Tell("return", "¡SEGUÍ A TUS DUEÑOS!", "Seguilos.");
+        Tell("return", "SEGUÍ A TUS PADRES", "", priority: 1);
+    }
+
+    private void OnFirstHumanTrailVisible()
+    {
+        if (closing || humanScentNoticeRequested) return;
+        humanScentNoticeRequested = true;
+        humanScentRoutine = StartCoroutine(PresentHumanScentTutorialWhenSafe());
+    }
+
+    private IEnumerator PresentHumanScentTutorialWhenSafe()
+    {
+        while (!closing && ((contextualCamera && contextualCamera.IsPlaying) ||
+            (tutorial && tutorial.Step != BedroomTutorialStep.Complete) || presentation != null ||
+            pending.Count > 0))
+            yield return null;
+
+        if (!closing)
+            Tell("human-scent", "¿ESOS CUADROS NARANJAS SON UN OLOR?", "¡Voy a seguirlos!", priority: 1,
+                remindable: false);
+        humanScentRoutine = null;
     }
 
     public void OnClosingBarkRequested()
@@ -392,6 +417,7 @@ public sealed class GameplayGuidance : MonoBehaviour
     private void OnDisable()
     {
         if (beam) beam.InterferenceAccepted.RemoveListener(OnInterferenceAccepted);
+        if (humanScentTrail) humanScentTrail.FirstHumanTrailVisible -= OnFirstHumanTrailVisible;
         if (bathroom)
         {
             bathroom.AccidentStarted -= OnBathroomAccident;
@@ -399,6 +425,7 @@ public sealed class GameplayGuidance : MonoBehaviour
         }
         StopAllCoroutines();
         presentation = null;
+        humanScentRoutine = null;
         pending.Clear();
         reminder = null;
         HideNotice();

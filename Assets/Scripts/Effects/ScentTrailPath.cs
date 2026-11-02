@@ -10,6 +10,8 @@ public enum ScentTrailKind
 
 public sealed class ScentTrailPath : MonoBehaviour
 {
+    public event System.Action FirstHumanTrailVisible;
+
     [Header("Activación y fuentes")]
     [SerializeField] private bool scentEnabled = true;
     [SerializeField] private ScentTrailKind scentKind;
@@ -64,6 +66,7 @@ public sealed class ScentTrailPath : MonoBehaviour
     private Texture2D softParticleTexture;
     private float nextRefresh;
     private float contextualBrightness = 1f;
+    private bool firstHumanTrailNotified;
 
     public int RecordedMarkCount => marks.Count;
     public int VisibleSampleCount { get; private set; }
@@ -278,6 +281,12 @@ public sealed class ScentTrailPath : MonoBehaviour
                 particles.Emit(emit, 1);
             }
             VisibleSampleCount++;
+        }
+
+        if (scentKind == ScentTrailKind.Human && VisibleSampleCount > 0 && !firstHumanTrailNotified)
+        {
+            firstHumanTrailNotified = true;
+            FirstHumanTrailVisible?.Invoke();
         }
     }
 

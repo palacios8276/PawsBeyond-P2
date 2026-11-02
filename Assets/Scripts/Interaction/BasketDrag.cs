@@ -3,13 +3,30 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 public class BasketDrag : MonoBehaviour
 {
+    public enum DragState { Free, Extracting, Held, Releasing }
+
     [Header("Recogida hacia el hocico")]
     [SerializeField, Min(0.05f)] private float extractionDuration = 0.28f;
     [SerializeField, Min(0f)] private float extractionHeight = 0.45f;
     [SerializeField, Range(0.1f, 0.9f)] private float liftPortion = 0.55f;
+    [SerializeField, Range(0.05f, 0.4f)] private float descentPortion = 0.25f;
+    [SerializeField, Min(0f)] private float extractionClearanceDistance;
     [Header("Sujeción")]
     [SerializeField] private Vector3 heldOffset = new Vector3(0f, 0.12f, 0f);
+    [SerializeField] private bool preserveGrabRotation = true;
+    [SerializeField] private Vector3 heldEulerOffset;
+    [SerializeField] private bool ignoreObstaclesWhileHeld;
     [SerializeField, Min(0f)] private float obstaclePadding = 0.025f;
+    [Header("Liberación física")]
+    [SerializeField] private RigidbodyConstraints freeConstraints = RigidbodyConstraints.None;
+    [SerializeField, Min(0f)] private float releaseDownwardSpeed = 0.25f;
+    [SerializeField, Min(0f)] private float releaseCollisionDelay = 0.12f;
+    [SerializeField, Min(0.05f)] private float maximumCollisionDelay = 0.5f;
+    [SerializeField, Min(0f)] private float releaseSeparationPadding = 0.015f;
+    [Header("Estabilidad libre")]
+    [SerializeField, Range(0f, 1f)] private float playerPushMultiplier = 1f;
+    [SerializeField, Min(0f)] private float maximumFreeSpeed;
+    [SerializeField, Min(0f)] private float maximumFreeAngularSpeed;
 
     private Rigidbody body;
     private Transform holder;
@@ -18,15 +35,16 @@ public class BasketDrag : MonoBehaviour
     private Vector3 extractionStart, extractionPeak;
     private Quaternion extractionStartRotation, heldRotationOffset;
     private float extractionElapsed;
-    private bool extracting;
-    private bool previousUseGravity, previousDetectCollisions, previousIsKinematic;
-    private RigidbodyConstraints previousConstraints;
+    private float restorePlayerCollisionsAt, forceRestorePlayerCollisionsAt;
+    private bool previousDetectCollisions;
     private CollisionDetectionMode previousCollisionMode;
     private RigidbodyInterpolation previousInterpolation;
     private InteractableHighlight highlight;
-    public bool IsHeld => holder != null;
-    public bool IsExtracting => IsHeld && extracting;
-    public bool CanBeGrabbed => body && !body.isKinematic && !IsHeld;
+    private DragState state;
+    public DragState State => state;
+    public bool IsHeld => state == DragState.Extracting || state == DragState.Held;
+    public bool IsExtracting => state == DragState.Extracting;
+    public bool CanBeGrabbed => body && !body.isKinematic && state == DragState.Free;
     public bool HasBeenDragged { get; private set; }
 
     private void Awake()
@@ -44,11 +62,8 @@ public class BasketDrag : MonoBehaviour
 
     public bool Grab(Transform player, Transform grip)
     {
-        if (body.isKinematic || IsHeld) return false;
-        previousIsKinematic = body.isKinematic;
-        previousUseGravity = body.useGravity;
+        if (body.isKinematic || state != DragState.Free) return false;
         previousDetectCollisions = body.detectCollisions;
-        previousConstraints = body.constraints;
         previousCollisionMode = body.collisionDetectionMode;
         previousInterpolation = body.interpolation;
 
@@ -68,9 +83,11 @@ public class BasketDrag : MonoBehaviour
         extractionStart = body.position;
         extractionPeak = extractionStart + Vector3.up * extractionHeight;
         extractionStartRotation = body.rotation;
-        heldRotationOffset = Quaternion.Inverse(holder.rotation) * body.rotation;
+        heldRotationOffset = preserveGrabRotation
+            ? Quaternion.Inverse(holder.rotation) * body.rotation
+            : Quaternion.Euler(heldEulerOffset);
         extractionElapsed = 0f;
-        extracting = true;
+        state = DragState.Extracting;
         HasBeenDragged = true;
         if (highlight) highlight.SetHighlighted(false);
         return true;
@@ -84,23 +101,26 @@ public class BasketDrag : MonoBehaviour
     public void Release()
     {
         if (!IsHeld) return;
-        SetPlayerCollisions(false);
+        state = DragState.Releasing;
+        holder = null;
         if (body)
         {
-            body.detectCollisions = previousDetectCollisions;
-            body.isKinematic = previousIsKinematic;
-            body.useGravity = previousUseGravity;
-            body.constraints = previousConstraints &
-                ~(RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ);
+            body.detectCollisions = true;
+            body.useGravity = true;
+            body.constraints = freeConstraints;
             body.collisionDetectionMode = previousCollisionMode;
             body.interpolation = previousInterpolation;
+            ResolveReleaseOverlaps();
+            body.isKinematic = false;
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
+            if (releaseDownwardSpeed > 0f)
+                body.linearVelocity = Vector3.down * releaseDownwardSpeed;
             body.WakeUp();
         }
-        holder = null;
-        extracting = false;
-        playerColliders = null;
+        restorePlayerCollisionsAt = Time.fixedTime + releaseCollisionDelay;
+        forceRestorePlayerCollisionsAt = Time.fixedTime + Mathf.Max(releaseCollisionDelay,
+            maximumCollisionDelay);
     }
 
     private void SetPlayerCollisions(bool ignore)
@@ -113,45 +133,158 @@ public class BasketDrag : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (!holder) return;
+        if (state == DragState.Free)
+        {
+            ClampFreeMotion();
+            return;
+        }
+        if (state == DragState.Releasing)
+        {
+            bool delayElapsed = Time.fixedTime >= restorePlayerCollisionsAt;
+            bool forced = Time.fixedTime >= forceRestorePlayerCollisionsAt;
+            if (delayElapsed && (!OverlapsPlayer() || forced)) CompleteRelease();
+            return;
+        }
+        if (!holder || !IsHeld) return;
         Vector3 target = holder.TransformPoint(heldOffset);
         Quaternion targetRotation = holder.rotation * heldRotationOffset;
-        if (extracting)
+        if (state == DragState.Extracting)
         {
             extractionElapsed += Time.fixedDeltaTime;
             float normalized = Mathf.Clamp01(extractionElapsed / extractionDuration);
             float liftEnd = Mathf.Clamp(liftPortion, 0.1f, 0.9f);
-            bool lifting = normalized < liftEnd;
-            Vector3 next = lifting
-                ? Vector3.Lerp(extractionStart, extractionPeak, Mathf.SmoothStep(0f, 1f, normalized / liftEnd))
-                : Vector3.Lerp(extractionPeak, target,
-                    Mathf.SmoothStep(0f, 1f, (normalized - liftEnd) / (1f - liftEnd)));
-            if (!lifting)
+            float descentStart = Mathf.Clamp(1f - descentPortion, liftEnd + 0.05f, 0.95f);
+            Vector3 horizontal = Vector3.ProjectOnPlane(target - extractionStart, Vector3.up);
+            float clearance = extractionClearanceDistance > 0f
+                ? Mathf.Min(extractionClearanceDistance, horizontal.magnitude) : horizontal.magnitude;
+            Vector3 clearancePoint = horizontal.sqrMagnitude > 0.0001f
+                ? extractionStart + horizontal.normalized * clearance : target;
+            Vector3 targetClearance = new Vector3(clearancePoint.x,
+                Mathf.Max(extractionPeak.y, target.y + obstaclePadding), clearancePoint.z);
+            Vector3 next;
+            if (normalized < liftEnd)
+                next = Vector3.Lerp(extractionStart, extractionPeak,
+                    Mathf.SmoothStep(0f, 1f, normalized / liftEnd));
+            else if (normalized < descentStart)
+                next = Vector3.Lerp(extractionPeak, targetClearance,
+                    Mathf.SmoothStep(0f, 1f, (normalized - liftEnd) / (descentStart - liftEnd)));
+            else
             {
-                body.detectCollisions = previousDetectCollisions;
-                next = GetObstacleLimitedPosition(next);
+                if (!ignoreObstaclesWhileHeld)
+                    body.detectCollisions = previousDetectCollisions;
+                next = Vector3.Lerp(targetClearance, target,
+                    Mathf.SmoothStep(0f, 1f, (normalized - descentStart) / (1f - descentStart)));
+                if (!ignoreObstaclesWhileHeld)
+                    next = GetObstacleLimitedPosition(next);
             }
             body.MovePosition(next);
             body.MoveRotation(Quaternion.Slerp(extractionStartRotation, targetRotation,
                 Mathf.SmoothStep(0f, 1f, normalized)));
             if (normalized < 1f) return;
-            extracting = false;
-            body.detectCollisions = previousDetectCollisions;
+            state = DragState.Held;
+            if (!ignoreObstaclesWhileHeld)
+                body.detectCollisions = previousDetectCollisions;
         }
 
-        body.MovePosition(GetObstacleLimitedPosition(target));
+        body.MovePosition(ignoreObstaclesWhileHeld ? target : GetObstacleLimitedPosition(target));
         body.MoveRotation(targetRotation);
+    }
+
+    public void ApplyPlayerPush(Vector3 direction, Vector3 point, float power)
+    {
+        if (!body || body.isKinematic || state != DragState.Free || playerPushMultiplier <= 0f) return;
+        body.AddForceAtPosition(direction * (power * playerPushMultiplier), point, ForceMode.Impulse);
+    }
+
+    private void ClampFreeMotion()
+    {
+        if (!body || body.isKinematic) return;
+        if (maximumFreeSpeed > 0f && body.linearVelocity.sqrMagnitude > maximumFreeSpeed * maximumFreeSpeed)
+            body.linearVelocity = Vector3.ClampMagnitude(body.linearVelocity, maximumFreeSpeed);
+        if (maximumFreeAngularSpeed > 0f && body.angularVelocity.sqrMagnitude > maximumFreeAngularSpeed * maximumFreeAngularSpeed)
+            body.angularVelocity = Vector3.ClampMagnitude(body.angularVelocity, maximumFreeAngularSpeed);
+    }
+
+    private void ResolveReleaseOverlaps()
+    {
+        if (basketColliders == null) return;
+        Physics.SyncTransforms();
+        for (int iteration = 0; iteration < 3; iteration++)
+        {
+            Vector3 correction = Vector3.zero;
+            foreach (Collider own in basketColliders)
+            {
+                if (!own || !own.enabled || own.isTrigger) continue;
+                Collider[] nearby = Physics.OverlapBox(own.bounds.center,
+                    own.bounds.extents + Vector3.one * releaseSeparationPadding,
+                    Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+                foreach (Collider other in nearby)
+                {
+                    if (!other || other.isTrigger || other.transform.IsChildOf(transform) ||
+                        IsPlayerCollider(other)) continue;
+                    if (Physics.ComputePenetration(own, own.transform.position, own.transform.rotation,
+                        other, other.transform.position, other.transform.rotation,
+                        out Vector3 direction, out float distance) && distance > 0.001f)
+                        correction += direction * (distance + releaseSeparationPadding);
+                }
+            }
+            if (correction.sqrMagnitude < 0.000001f) break;
+            body.position += Vector3.ClampMagnitude(correction, 0.25f);
+            Physics.SyncTransforms();
+        }
+    }
+
+    private bool OverlapsPlayer()
+    {
+        if (playerColliders == null || basketColliders == null) return false;
+        foreach (Collider own in basketColliders)
+            foreach (Collider playerCollider in playerColliders)
+                if (own && own.enabled && playerCollider && playerCollider.enabled &&
+                    Physics.ComputePenetration(own, own.transform.position, own.transform.rotation,
+                        playerCollider, playerCollider.transform.position, playerCollider.transform.rotation,
+                        out _, out float distance) && distance > 0.001f)
+                    return true;
+        return false;
+    }
+
+    private bool IsPlayerCollider(Collider candidate)
+    {
+        if (playerColliders == null) return false;
+        foreach (Collider playerCollider in playerColliders)
+            if (playerCollider == candidate) return true;
+        return false;
+    }
+
+    private void CompleteRelease()
+    {
+        SetPlayerCollisions(false);
+        playerColliders = null;
+        state = DragState.Free;
+        if (body) body.WakeUp();
     }
 
     private Vector3 GetObstacleLimitedPosition(Vector3 target)
     {
         Vector3 delta = target - body.position;
         float distance = delta.magnitude;
-        if (distance > 0.0001f && body.SweepTest(delta / distance, out RaycastHit hit,
-            distance, QueryTriggerInteraction.Ignore))
-            return body.position + delta.normalized * Mathf.Max(0f, hit.distance - obstaclePadding);
+        if (distance <= 0.0001f) return target;
+        float nearestObstacle = distance;
+        RaycastHit[] hits = body.SweepTestAll(delta / distance, distance,
+            QueryTriggerInteraction.Ignore);
+        foreach (RaycastHit hit in hits)
+        {
+            if (!hit.collider || hit.collider.transform.IsChildOf(transform) ||
+                IsPlayerCollider(hit.collider)) continue;
+            nearestObstacle = Mathf.Min(nearestObstacle, hit.distance);
+        }
+        if (nearestObstacle < distance)
+            return body.position + delta.normalized * Mathf.Max(0f, nearestObstacle - obstaclePadding);
         return target;
     }
 
-    private void OnDisable() => Release();
+    private void OnDisable()
+    {
+        if (IsHeld) Release();
+        if (state == DragState.Releasing) CompleteRelease();
+    }
 }

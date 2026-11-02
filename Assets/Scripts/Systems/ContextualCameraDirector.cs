@@ -9,20 +9,26 @@ public sealed class ContextualCameraDirector : MonoBehaviour
     [SerializeField] private CinemachineCamera gameplayCamera;
     [SerializeField] private CinemachineCamera abductionCamera;
     [SerializeField] private CinemachineCamera alienReactionCamera;
+    [SerializeField] private CinemachineBrain brain;
     [SerializeField] private int inactivePriority = -10;
     [SerializeField] private int activePriority = 30;
 
     [Header("Condición narrativa")]
     [SerializeField] private BedroomTutorial bedroomTutorial;
+    [SerializeField] private KitchenAlien alienA;
     [SerializeField] private PlayerGameplayLock permanentGameplayLock;
 
     [Header("Ritmo")]
     [SerializeField, Min(0f)] private float abductionMinimumSeconds = 1.2f;
     [SerializeField, Min(0.1f)] private float abductionSafetyTimeout = 7f;
     [SerializeField, Min(0.1f)] private float alienReactionSeconds = 0.85f;
+    [SerializeField, Min(0.1f)] private float alienReactionSafetyTimeout = 5f;
     [SerializeField, Min(0f)] private float returnBlendSeconds = 0.25f;
+    [SerializeField, Min(0.1f)] private float returnBlendSafetyTimeout = 3f;
 
     [Header("Controles temporales")]
+    [Tooltip("Lectores de órbita comunes a todas las cámaras contextuales.")]
+    [SerializeField] private MonoBehaviour[] orbitControls;
     [SerializeField] private MonoBehaviour[] abductionControls;
     [SerializeField] private MonoBehaviour[] alienReactionControls;
 
@@ -39,6 +45,7 @@ public sealed class ContextualCameraDirector : MonoBehaviour
 
     private void Awake()
     {
+        if (!brain && Camera.main) brain = Camera.main.GetComponent<CinemachineBrain>();
         SetPriority(abductionCamera, inactivePriority);
         SetPriority(alienReactionCamera, inactivePriority);
     }
@@ -56,8 +63,7 @@ public sealed class ContextualCameraDirector : MonoBehaviour
         if (alienReactionPlayed || IsPlaying || !alienReactionCamera) return;
         alienReactionPlayed = true;
         AlienReactionPlayCount++;
-        activeSequence = StartCoroutine(TimedSequence(alienReactionCamera,
-            alienReactionControls, alienReactionSeconds));
+        activeSequence = StartCoroutine(AlienReactionSequence());
     }
 
     private IEnumerator AbductionSequence()
@@ -75,35 +81,55 @@ public sealed class ContextualCameraDirector : MonoBehaviour
         yield return EndSequence();
     }
 
-    private IEnumerator TimedSequence(CinemachineCamera camera, MonoBehaviour[] controls, float duration)
+    private IEnumerator AlienReactionSequence()
     {
-        BeginSequence(camera, controls);
-        float endAt = Time.unscaledTime + duration;
-        while (Time.unscaledTime < endAt) yield return null;
+        BeginSequence(alienReactionCamera, alienReactionControls);
+        float startedAt = Time.unscaledTime;
+
+        while (Time.unscaledTime - startedAt < alienReactionSeconds)
+            yield return null;
+
+        while (alienA && IsAlienReactionActive(alienA.State) &&
+            Time.unscaledTime - startedAt < alienReactionSafetyTimeout)
+            yield return null;
+
         yield return EndSequence();
     }
+
+    private static bool IsAlienReactionActive(KitchenAlienState state) =>
+        state == KitchenAlienState.Startled || state == KitchenAlienState.Running;
 
     private void BeginSequence(CinemachineCamera camera, MonoBehaviour[] controls)
     {
         activeCamera = camera;
-        SaveAndDisable(controls);
+        savedControlStates.Clear();
+        SaveAndDisable(orbitControls, false);
+        SaveAndDisable(controls, false);
         SetPriority(camera, activePriority);
     }
 
     private IEnumerator EndSequence()
     {
         SetPriority(activeCamera, inactivePriority);
-        float endAt = Time.unscaledTime + returnBlendSeconds;
-        while (Time.unscaledTime < endAt) yield return null;
+        float minimumEndAt = Time.unscaledTime + returnBlendSeconds;
+        float timeoutAt = Time.unscaledTime + returnBlendSafetyTimeout;
+        while (Time.unscaledTime < timeoutAt)
+        {
+            bool minimumElapsed = Time.unscaledTime >= minimumEndAt;
+            bool gameplayHasControl = !brain ||
+                (!brain.IsBlending && brain.ActiveVirtualCamera == gameplayCamera);
+            if (minimumElapsed && gameplayHasControl) break;
+            yield return null;
+        }
 
         RestoreControls();
         activeCamera = null;
         activeSequence = null;
     }
 
-    private void SaveAndDisable(MonoBehaviour[] controls)
+    private void SaveAndDisable(MonoBehaviour[] controls, bool clearSaved = true)
     {
-        savedControlStates.Clear();
+        if (clearSaved) savedControlStates.Clear();
         if (controls == null) return;
 
         foreach (MonoBehaviour control in controls)
