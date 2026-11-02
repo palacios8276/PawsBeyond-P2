@@ -35,6 +35,12 @@ public class CharacterControllerPush : MonoBehaviour
             return;
         }
 
+        if (body.TryGetComponent<BasketDrag>(out var draggable))
+        {
+            draggable.ApplyPlayerPush(pushDirection, hit.point, pushPower);
+            return;
+        }
+
         // Aplicamos la fuerza en el punto exacto de contacto.
         // Esto permite generar torque sobre objetos con bisagra.
         body.AddForceAtPosition(

@@ -22,6 +22,10 @@ public class BasketDrag : MonoBehaviour
     [SerializeField, Min(0f)] private float releaseCollisionDelay = 0.12f;
     [SerializeField, Min(0.05f)] private float maximumCollisionDelay = 0.5f;
     [SerializeField, Min(0f)] private float releaseSeparationPadding = 0.015f;
+    [Header("Estabilidad libre")]
+    [SerializeField, Range(0f, 1f)] private float playerPushMultiplier = 1f;
+    [SerializeField, Min(0f)] private float maximumFreeSpeed;
+    [SerializeField, Min(0f)] private float maximumFreeAngularSpeed;
 
     private Rigidbody body;
     private Transform holder;
@@ -30,7 +34,6 @@ public class BasketDrag : MonoBehaviour
     private Vector3 extractionStart, extractionPeak;
     private Quaternion extractionStartRotation, heldRotationOffset;
     private float extractionElapsed;
-    private bool clearancePending;
     private float restorePlayerCollisionsAt, forceRestorePlayerCollisionsAt;
     private bool previousDetectCollisions;
     private CollisionDetectionMode previousCollisionMode;
@@ -83,7 +86,6 @@ public class BasketDrag : MonoBehaviour
             ? Quaternion.Inverse(holder.rotation) * body.rotation
             : Quaternion.Euler(heldEulerOffset);
         extractionElapsed = 0f;
-        clearancePending = extractionClearanceDistance > 0f;
         state = DragState.Extracting;
         HasBeenDragged = true;
         if (highlight) highlight.SetHighlighted(false);
@@ -130,6 +132,11 @@ public class BasketDrag : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (state == DragState.Free)
+        {
+            ClampFreeMotion();
+            return;
+        }
         if (state == DragState.Releasing)
         {
             bool delayElapsed = Time.fixedTime >= restorePlayerCollisionsAt;
@@ -146,8 +153,13 @@ public class BasketDrag : MonoBehaviour
             float normalized = Mathf.Clamp01(extractionElapsed / extractionDuration);
             float liftEnd = Mathf.Clamp(liftPortion, 0.1f, 0.9f);
             float descentStart = Mathf.Clamp(1f - descentPortion, liftEnd + 0.05f, 0.95f);
-            Vector3 targetClearance = new Vector3(target.x,
-                Mathf.Max(extractionPeak.y, target.y + obstaclePadding), target.z);
+            Vector3 horizontal = Vector3.ProjectOnPlane(target - extractionStart, Vector3.up);
+            float clearance = extractionClearanceDistance > 0f
+                ? Mathf.Min(extractionClearanceDistance, horizontal.magnitude) : horizontal.magnitude;
+            Vector3 clearancePoint = horizontal.sqrMagnitude > 0.0001f
+                ? extractionStart + horizontal.normalized * clearance : target;
+            Vector3 targetClearance = new Vector3(clearancePoint.x,
+                Mathf.Max(extractionPeak.y, target.y + obstaclePadding), clearancePoint.z);
             Vector3 next;
             if (normalized < liftEnd)
                 next = Vector3.Lerp(extractionStart, extractionPeak,
@@ -158,8 +170,7 @@ public class BasketDrag : MonoBehaviour
             else
             {
                 body.detectCollisions = previousDetectCollisions;
-                Vector3 extractionTarget = clearancePending ? targetClearance : target;
-                next = Vector3.Lerp(targetClearance, extractionTarget,
+                next = Vector3.Lerp(targetClearance, target,
                     Mathf.SmoothStep(0f, 1f, (normalized - descentStart) / (1f - descentStart)));
                 next = GetObstacleLimitedPosition(next);
             }
@@ -171,17 +182,23 @@ public class BasketDrag : MonoBehaviour
             body.detectCollisions = previousDetectCollisions;
         }
 
-        if (clearancePending)
-        {
-            Vector2 start = new Vector2(extractionStart.x, extractionStart.z);
-            Vector2 requested = new Vector2(target.x, target.z);
-            if (Vector2.Distance(start, requested) >= extractionClearanceDistance)
-                clearancePending = false;
-            else
-                target.y = Mathf.Max(target.y, extractionPeak.y);
-        }
         body.MovePosition(GetObstacleLimitedPosition(target));
         body.MoveRotation(targetRotation);
+    }
+
+    public void ApplyPlayerPush(Vector3 direction, Vector3 point, float power)
+    {
+        if (!body || body.isKinematic || state != DragState.Free || playerPushMultiplier <= 0f) return;
+        body.AddForceAtPosition(direction * (power * playerPushMultiplier), point, ForceMode.Impulse);
+    }
+
+    private void ClampFreeMotion()
+    {
+        if (!body || body.isKinematic) return;
+        if (maximumFreeSpeed > 0f && body.linearVelocity.sqrMagnitude > maximumFreeSpeed * maximumFreeSpeed)
+            body.linearVelocity = Vector3.ClampMagnitude(body.linearVelocity, maximumFreeSpeed);
+        if (maximumFreeAngularSpeed > 0f && body.angularVelocity.sqrMagnitude > maximumFreeAngularSpeed * maximumFreeAngularSpeed)
+            body.angularVelocity = Vector3.ClampMagnitude(body.angularVelocity, maximumFreeAngularSpeed);
     }
 
     private void ResolveReleaseOverlaps()
