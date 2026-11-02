@@ -15,6 +15,7 @@ public class BasketDrag : MonoBehaviour
     [SerializeField] private Vector3 heldOffset = new Vector3(0f, 0.12f, 0f);
     [SerializeField] private bool preserveGrabRotation = true;
     [SerializeField] private Vector3 heldEulerOffset;
+    [SerializeField] private bool ignoreObstaclesWhileHeld;
     [SerializeField, Min(0f)] private float obstaclePadding = 0.025f;
     [Header("Liberación física")]
     [SerializeField] private RigidbodyConstraints freeConstraints = RigidbodyConstraints.None;
@@ -169,20 +170,23 @@ public class BasketDrag : MonoBehaviour
                     Mathf.SmoothStep(0f, 1f, (normalized - liftEnd) / (descentStart - liftEnd)));
             else
             {
-                body.detectCollisions = previousDetectCollisions;
+                if (!ignoreObstaclesWhileHeld)
+                    body.detectCollisions = previousDetectCollisions;
                 next = Vector3.Lerp(targetClearance, target,
                     Mathf.SmoothStep(0f, 1f, (normalized - descentStart) / (1f - descentStart)));
-                next = GetObstacleLimitedPosition(next);
+                if (!ignoreObstaclesWhileHeld)
+                    next = GetObstacleLimitedPosition(next);
             }
             body.MovePosition(next);
             body.MoveRotation(Quaternion.Slerp(extractionStartRotation, targetRotation,
                 Mathf.SmoothStep(0f, 1f, normalized)));
             if (normalized < 1f) return;
             state = DragState.Held;
-            body.detectCollisions = previousDetectCollisions;
+            if (!ignoreObstaclesWhileHeld)
+                body.detectCollisions = previousDetectCollisions;
         }
 
-        body.MovePosition(GetObstacleLimitedPosition(target));
+        body.MovePosition(ignoreObstaclesWhileHeld ? target : GetObstacleLimitedPosition(target));
         body.MoveRotation(targetRotation);
     }
 

@@ -159,6 +159,7 @@ MonoBehaviour:
   heldOffset: {x: 0, y: 0.02, z: 0.32}
   preserveGrabRotation: 0
   heldEulerOffset: {x: 0, y: 0, z: 90}
+  ignoreObstaclesWhileHeld: 1
   obstaclePadding: 0.025
   freeConstraints: 0
   releaseDownwardSpeed: 0.25
