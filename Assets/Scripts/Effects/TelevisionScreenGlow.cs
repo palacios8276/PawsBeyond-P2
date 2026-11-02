@@ -37,6 +37,7 @@ public sealed class TelevisionScreenGlow : MonoBehaviour
         float variation = 0.96f + 0.04f * Mathf.Sin(Time.time * Mathf.PI * 2f / variationSeconds);
         screen.GetPropertyBlock(block);
         block.SetTexture("_BaseMap", staticTexture);
+        block.SetTexture("_EmissionMap", staticTexture);
         block.SetColor("_BaseColor", screenColor * variation);
         block.SetColor("_EmissionColor", screenColor * emission * variation);
         screen.SetPropertyBlock(block);
