@@ -15,12 +15,14 @@ public sealed class ContextualCameraDirector : MonoBehaviour
 
     [Header("Condición narrativa")]
     [SerializeField] private BedroomTutorial bedroomTutorial;
+    [SerializeField] private KitchenAlien alienA;
     [SerializeField] private PlayerGameplayLock permanentGameplayLock;
 
     [Header("Ritmo")]
     [SerializeField, Min(0f)] private float abductionMinimumSeconds = 1.2f;
     [SerializeField, Min(0.1f)] private float abductionSafetyTimeout = 7f;
     [SerializeField, Min(0.1f)] private float alienReactionSeconds = 0.85f;
+    [SerializeField, Min(0.1f)] private float alienReactionSafetyTimeout = 5f;
     [SerializeField, Min(0f)] private float returnBlendSeconds = 0.25f;
     [SerializeField, Min(0.1f)] private float returnBlendSafetyTimeout = 3f;
 
@@ -61,8 +63,7 @@ public sealed class ContextualCameraDirector : MonoBehaviour
         if (alienReactionPlayed || IsPlaying || !alienReactionCamera) return;
         alienReactionPlayed = true;
         AlienReactionPlayCount++;
-        activeSequence = StartCoroutine(TimedSequence(alienReactionCamera,
-            alienReactionControls, alienReactionSeconds));
+        activeSequence = StartCoroutine(AlienReactionSequence());
     }
 
     private IEnumerator AbductionSequence()
@@ -80,13 +81,23 @@ public sealed class ContextualCameraDirector : MonoBehaviour
         yield return EndSequence();
     }
 
-    private IEnumerator TimedSequence(CinemachineCamera camera, MonoBehaviour[] controls, float duration)
+    private IEnumerator AlienReactionSequence()
     {
-        BeginSequence(camera, controls);
-        float endAt = Time.unscaledTime + duration;
-        while (Time.unscaledTime < endAt) yield return null;
+        BeginSequence(alienReactionCamera, alienReactionControls);
+        float startedAt = Time.unscaledTime;
+
+        while (Time.unscaledTime - startedAt < alienReactionSeconds)
+            yield return null;
+
+        while (alienA && IsAlienReactionActive(alienA.State) &&
+            Time.unscaledTime - startedAt < alienReactionSafetyTimeout)
+            yield return null;
+
         yield return EndSequence();
     }
+
+    private static bool IsAlienReactionActive(KitchenAlienState state) =>
+        state == KitchenAlienState.Startled || state == KitchenAlienState.Running;
 
     private void BeginSequence(CinemachineCamera camera, MonoBehaviour[] controls)
     {

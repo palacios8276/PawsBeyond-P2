@@ -387,7 +387,7 @@ public sealed class GameplayGuidance : MonoBehaviour
             yield return null;
 
         if (!closing)
-            Tell("human-scent", "¡RECONOCÉS SU OLOR!", "Seguí el rastro.", priority: 1,
+            Tell("human-scent", "¿ESOS CUADROS NARANJAS SON UN OLOR?", "¡Voy a seguirlos!", priority: 1,
                 remindable: false);
         humanScentRoutine = null;
     }
