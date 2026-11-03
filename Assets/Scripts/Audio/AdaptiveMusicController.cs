@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -22,6 +23,7 @@ public sealed class AdaptiveMusicController : MonoBehaviour
     public float CrossfadeSeconds => crossfadeSeconds;
     public bool ThreatActive => threatActive;
     public int TransitionCount { get; private set; }
+    public event Action<AdaptiveMusicState> StateChanged;
 
     private void Awake()
     {
@@ -33,17 +35,21 @@ public sealed class AdaptiveMusicController : MonoBehaviour
 
     private void Start() => BeginTransition(AdaptiveMusicState.Regular);
 
-    public void OnAbductionStarted()
+    public void OnThreatStarted()
     {
         threatActive = true;
         BeginTransition(AdaptiveMusicState.Stress);
     }
 
-    public void OnOperatorsRetreated()
+    public void OnThreatEnded()
     {
         threatActive = false;
         if (!closingActive) BeginTransition(AdaptiveMusicState.Regular);
     }
+
+    // Conserva las conexiones serializadas de las fases anteriores.
+    public void OnAbductionStarted() => OnThreatStarted();
+    public void OnOperatorsRetreated() => OnThreatEnded();
 
     public void RequestRegular()
     {
@@ -60,7 +66,8 @@ public sealed class AdaptiveMusicController : MonoBehaviour
 
     public void OnContinueShown()
     {
-        state = AdaptiveMusicState.FadingOut;
+        if (state == AdaptiveMusicState.FadingOut) return;
+        SetState(AdaptiveMusicState.FadingOut);
         RestartTransition(FadeOut());
     }
 
@@ -78,9 +85,16 @@ public sealed class AdaptiveMusicController : MonoBehaviour
         AudioSource target = next == AdaptiveMusicState.Stress ? stressSource : regularSource;
         if (!target) return;
         if (state == next && target.isPlaying && transition == null) return;
-        state = next;
+        SetState(next);
         TransitionCount++;
         RestartTransition(Crossfade(next));
+    }
+
+    private void SetState(AdaptiveMusicState next)
+    {
+        if (state == next) return;
+        state = next;
+        StateChanged?.Invoke(state);
     }
 
     private void RestartTransition(IEnumerator routine)
