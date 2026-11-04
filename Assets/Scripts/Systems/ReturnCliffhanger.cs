@@ -16,7 +16,7 @@ public sealed class ReturnCliffhanger : MonoBehaviour
     [SerializeField] private int bedroomArrivalWaypoint = 30;
     [SerializeField] private Light glow;
     [SerializeField] private GameObject partialFigure;
-    [SerializeField] private ClosingAlienRetreat closingRetreat;
+    [SerializeField] private ClosingCameraApproach closingCameraApproach;
     [SerializeField] private CanvasGroup blackScreen;
     [SerializeField] private TMP_Text closingText;
     [SerializeField, Min(0.1f)] private float glowSeconds = 1f;
@@ -29,13 +29,16 @@ public sealed class ReturnCliffhanger : MonoBehaviour
     [SerializeField] private UnityEvent onContinueShown = new UnityEvent();
     [SerializeField] private UnityEvent onBarkRequested = new UnityEvent();
     [SerializeField] private UnityEvent onBarkOpportunityEnded = new UnityEvent();
+
     private BoxCollider zone;
     private bool playerInside, ownersArrived, closingRequested, barkPromptShown;
+
     public int TriggerCount { get; private set; }
     public bool IsComplete { get; private set; }
     public bool IsEligible => progression.CurrentEpisode == NarrativeEpisode.ReturnAndClosing
         && kitchen.Step == KitchenEpisodeStep.Complete && ownersArrived;
     public bool IsAwaitingBark => !closingRequested && TriggerCount == 0 && playerInside && IsEligible;
+
     private void Awake()
     {
         zone = GetComponent<BoxCollider>();
@@ -46,20 +49,24 @@ public sealed class ReturnCliffhanger : MonoBehaviour
         if (blackScreen) blackScreen.alpha = 0;
         if (closingText) closingText.alpha = 0;
     }
+
     private void OnEnable()
     {
         if (journey) journey.WaypointReached += OnWaypointReached;
     }
+
     private void OnDisable()
     {
         if (journey) journey.WaypointReached -= OnWaypointReached;
     }
+
     private void OnTriggerEnter(Collider other)
     {
         if (!IsPlayer(other)) return;
         playerInside = true;
         TryRequestClosing();
     }
+
     private void OnTriggerExit(Collider other)
     {
         if (!IsPlayer(other)) return;
@@ -70,42 +77,48 @@ public sealed class ReturnCliffhanger : MonoBehaviour
             onBarkOpportunityEnded.Invoke();
         }
     }
+
     private bool IsPlayer(Collider other)
     {
         if (!other || !player) return false;
         CharacterController controller = other.GetComponentInParent<CharacterController>();
         return controller && controller.transform == player;
     }
+
     private bool PlayerIsInside()
     {
         return zone && player && zone.bounds.Contains(player.position + Vector3.up * 0.3f);
     }
+
     private void OnWaypointReached(int index)
     {
         if (index < bedroomArrivalWaypoint) return;
         ownersArrived = true;
         TryRequestClosing();
     }
+
     private void Update()
     {
-        // El chequeo geométrico cubre al perro que ya estaba dentro antes del evento de llegada.
         playerInside = PlayerIsInside();
         if (!ownersArrived && journey && journey.HasReachedWaypoint(bedroomArrivalWaypoint))
             ownersArrived = true;
         TryRequestClosing();
     }
+
     private void TryRequestClosing()
     {
         if (!IsAwaitingBark || barkPromptShown) return;
         barkPromptShown = true;
         onBarkRequested.Invoke();
     }
+
     public void TryBeginClosingFromBark()
     {
         if (!IsAwaitingBark) return;
         closingRequested = true;
         progression.RequestClosing();
     }
+
     public void BeginClosing()
     {
         if (TriggerCount != 0 || !IsEligible || !PlayerIsInside()) return;
@@ -114,38 +127,72 @@ public sealed class ReturnCliffhanger : MonoBehaviour
         if (gameplayLock) gameplayLock.LockForClosing();
         StartCoroutine(Present());
     }
+
     private IEnumerator Present()
     {
         journey.SetNarrativeHold(true);
         bedroomTrigger.RequestNarrativeOpening(true);
-        while (float.IsNaN(bedroomDoor.angle) || Mathf.Abs(bedroomDoor.angle) < 75f) yield return null;
+        while (float.IsNaN(bedroomDoor.angle) || Mathf.Abs(bedroomDoor.angle) < 75f)
+            yield return null;
+
         onGlowStarted.Invoke();
-        partialFigure.SetActive(true);
-        if (closingRetreat) closingRetreat.BeginRetreat();
-        StartCoroutine(InvokeClosingCameraCue());
-        for (float t = 0; t < glowSeconds; t += Time.deltaTime)
-        { glow.intensity = glowIntensity * Mathf.SmoothStep(0, 1, t / glowSeconds); yield return null; }
-        glow.intensity = glowIntensity;
-        while (closingRetreat && closingRetreat.IsMoving) yield return null;
+        if (partialFigure) partialFigure.SetActive(true);
+
+        bool cameraStarted = false;
+        float elapsed = 0f;
+        while (elapsed < glowSeconds)
+        {
+            if (!cameraStarted && elapsed >= closingCameraCueDelay)
+            {
+                StartClosingCameraCue();
+                cameraStarted = true;
+            }
+
+            if (glow)
+                glow.intensity = glowIntensity * Mathf.SmoothStep(0f, 1f, elapsed / glowSeconds);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (glow) glow.intensity = glowIntensity;
+        if (!cameraStarted)
+        {
+            float remainingDelay = Mathf.Max(0f, closingCameraCueDelay - elapsed);
+            if (remainingDelay > 0f) yield return new WaitForSeconds(remainingDelay);
+            StartClosingCameraCue();
+        }
+
+        while (closingCameraApproach && closingCameraApproach.IsMoving)
+            yield return null;
+
         yield return new WaitForSeconds(revealHoldSeconds);
-        for (float t = 0; t < fadeSeconds; t += Time.deltaTime)
-        { blackScreen.alpha = Mathf.SmoothStep(0, 1, t / fadeSeconds); yield return null; }
-        blackScreen.alpha = 1;
-        glow.intensity = 0;
-        partialFigure.SetActive(false);
+
+        for (float t = 0f; t < fadeSeconds; t += Time.deltaTime)
+        {
+            if (blackScreen) blackScreen.alpha = Mathf.SmoothStep(0f, 1f, t / fadeSeconds);
+            yield return null;
+        }
+
+        if (blackScreen) blackScreen.alpha = 1f;
+        if (glow) glow.intensity = 0f;
+        if (partialFigure) partialFigure.SetActive(false);
         bedroomTrigger.RequestNarrativeOpening(false);
         journey.SetNarrativeHold(false);
-        for (float t = 0; t < fadeSeconds; t += Time.deltaTime)
-        { closingText.alpha = Mathf.SmoothStep(0, 1, t / fadeSeconds); yield return null; }
-        closingText.alpha = 1;
+
+        for (float t = 0f; t < fadeSeconds; t += Time.deltaTime)
+        {
+            if (closingText) closingText.alpha = Mathf.SmoothStep(0f, 1f, t / fadeSeconds);
+            yield return null;
+        }
+
+        if (closingText) closingText.alpha = 1f;
         IsComplete = true;
         onContinueShown.Invoke();
     }
 
-    private IEnumerator InvokeClosingCameraCue()
+    private void StartClosingCameraCue()
     {
-        if (closingCameraCueDelay > 0f)
-            yield return new WaitForSeconds(closingCameraCueDelay);
         onFigureRevealed.Invoke();
+        if (closingCameraApproach) closingCameraApproach.BeginApproach();
     }
 }
