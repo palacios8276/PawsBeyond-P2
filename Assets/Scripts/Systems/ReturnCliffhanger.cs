@@ -16,10 +16,12 @@ public sealed class ReturnCliffhanger : MonoBehaviour
     [SerializeField] private int bedroomArrivalWaypoint = 30;
     [SerializeField] private Light glow;
     [SerializeField] private GameObject partialFigure;
+    [SerializeField] private ClosingAlienRetreat closingRetreat;
     [SerializeField] private CanvasGroup blackScreen;
     [SerializeField] private TMP_Text closingText;
     [SerializeField, Min(0.1f)] private float glowSeconds = 1f;
     [SerializeField, Min(0f)] private float revealHoldSeconds = 0.8f;
+    [SerializeField, Min(0f)] private float closingCameraCueDelay = 1.1f;
     [SerializeField, Min(0.1f)] private float fadeSeconds = 1f;
     [SerializeField, Min(0f)] private float glowIntensity = 6f;
     [SerializeField] private UnityEvent onGlowStarted = new UnityEvent();
@@ -119,10 +121,12 @@ public sealed class ReturnCliffhanger : MonoBehaviour
         while (float.IsNaN(bedroomDoor.angle) || Mathf.Abs(bedroomDoor.angle) < 75f) yield return null;
         onGlowStarted.Invoke();
         partialFigure.SetActive(true);
-        onFigureRevealed.Invoke();
+        if (closingRetreat) closingRetreat.BeginRetreat();
+        StartCoroutine(InvokeClosingCameraCue());
         for (float t = 0; t < glowSeconds; t += Time.deltaTime)
         { glow.intensity = glowIntensity * Mathf.SmoothStep(0, 1, t / glowSeconds); yield return null; }
         glow.intensity = glowIntensity;
+        while (closingRetreat && closingRetreat.IsMoving) yield return null;
         yield return new WaitForSeconds(revealHoldSeconds);
         for (float t = 0; t < fadeSeconds; t += Time.deltaTime)
         { blackScreen.alpha = Mathf.SmoothStep(0, 1, t / fadeSeconds); yield return null; }
@@ -136,5 +140,12 @@ public sealed class ReturnCliffhanger : MonoBehaviour
         closingText.alpha = 1;
         IsComplete = true;
         onContinueShown.Invoke();
+    }
+
+    private IEnumerator InvokeClosingCameraCue()
+    {
+        if (closingCameraCueDelay > 0f)
+            yield return new WaitForSeconds(closingCameraCueDelay);
+        onFigureRevealed.Invoke();
     }
 }
