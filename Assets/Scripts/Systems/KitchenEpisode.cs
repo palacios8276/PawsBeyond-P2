@@ -35,6 +35,7 @@ public sealed class KitchenEpisode : MonoBehaviour
     [SerializeField] private UnityEvent onStarted = new UnityEvent();
     [SerializeField] private UnityEvent onHeardBark = new UnityEvent();
     [SerializeField] private UnityEvent onValidBark = new UnityEvent();
+    [SerializeField] private UnityEvent onHidingStarted = new UnityEvent();
     [SerializeField] private UnityEvent onHiding = new UnityEvent();
     [SerializeField] private UnityEvent onDiscovered = new UnityEvent();
     [SerializeField] private UnityEvent onFirstRetreated = new UnityEvent();
@@ -133,6 +134,7 @@ public sealed class KitchenEpisode : MonoBehaviour
 
     private IEnumerator HideFirst()
     {
+        onHidingStarted.Invoke();
         yield return firstAlien.Startle();
         yield return firstAlien.Travel(hidingRoute, true, true);
         firstAlien.SetState(KitchenAlienState.Hiding);

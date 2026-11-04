@@ -9,6 +9,7 @@ public sealed class ContextualCameraDirector : MonoBehaviour
     [SerializeField] private CinemachineCamera gameplayCamera;
     [SerializeField] private CinemachineCamera abductionCamera;
     [SerializeField] private CinemachineCamera alienReactionCamera;
+    [SerializeField] private CinemachineCamera closingRetreatCamera;
     [SerializeField] private CinemachineBrain brain;
     [SerializeField] private int inactivePriority = -10;
     [SerializeField] private int activePriority = 30;
@@ -37,8 +38,10 @@ public sealed class ContextualCameraDirector : MonoBehaviour
     private CinemachineCamera activeCamera;
     private bool abductionPlayed;
     private bool alienReactionPlayed;
+    private bool closingRetreatPlaying;
 
-    public bool IsPlaying => activeSequence != null;
+    public bool IsPlaying => activeSequence != null || closingRetreatPlaying;
+    public bool IsClosingRetreatPlaying => closingRetreatPlaying;
     public int AbductionPlayCount { get; private set; }
     public int AlienReactionPlayCount { get; private set; }
     public string ActiveCameraName => activeCamera ? activeCamera.name : string.Empty;
@@ -48,6 +51,7 @@ public sealed class ContextualCameraDirector : MonoBehaviour
         if (!brain && Camera.main) brain = Camera.main.GetComponent<CinemachineBrain>();
         SetPriority(abductionCamera, inactivePriority);
         SetPriority(alienReactionCamera, inactivePriority);
+        SetPriority(closingRetreatCamera, inactivePriority);
     }
 
     public void PlayAbduction()
@@ -64,6 +68,22 @@ public sealed class ContextualCameraDirector : MonoBehaviour
         alienReactionPlayed = true;
         AlienReactionPlayCount++;
         activeSequence = StartCoroutine(AlienReactionSequence());
+    }
+
+    public void PlayClosingRetreat()
+    {
+        if (closingRetreatPlaying || !closingRetreatCamera) return;
+
+        if (activeSequence != null)
+        {
+            StopCoroutine(activeSequence);
+            activeSequence = null;
+            SetPriority(activeCamera, inactivePriority);
+            RestoreControls();
+        }
+
+        closingRetreatPlaying = true;
+        BeginSequence(closingRetreatCamera, null);
     }
 
     private IEnumerator AbductionSequence()
@@ -158,7 +178,9 @@ public sealed class ContextualCameraDirector : MonoBehaviour
         if (activeSequence != null) StopCoroutine(activeSequence);
         SetPriority(abductionCamera, inactivePriority);
         SetPriority(alienReactionCamera, inactivePriority);
+        SetPriority(closingRetreatCamera, inactivePriority);
         RestoreControls();
+        closingRetreatPlaying = false;
         activeCamera = null;
         activeSequence = null;
     }
