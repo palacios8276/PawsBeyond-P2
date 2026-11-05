@@ -1,23 +1,49 @@
-# PawsBeyond-P2
+# Paws Beyond P2
 
-Proyecto académico de Unity 6 (6000.0.81f1), continuación independiente del Parcial 1.
+Vertical slice académico 3D desarrollado en **Unity 6 con URP** para el Segundo Parcial de Motores de Desarrollo 1. Es una evolución independiente de PawsBeyond-P1.
 
-Abrir esta carpeta en Unity Hub. Escena principal: `Assets/Scenes/Playground.unity`.
+**Versión:** `0.7.3-playtest`  
+**Unity:** `6000.0.81f1`  
+**Rama de entrega:** `main`
 
-La primera etapa de Audio Interactivo prepara un ambiente 2D y tres emisores 3D conectados a Ambience. Ya incorpora cuatro loops provisorios generados con Runway, asignados y habilitados para revisión en Play.
+## Contenido principal
 
-Detalles, recursos pendientes y pruebas: [Docs/P2_AUDIO_AMBIENCE.md](Docs/P2_AUDIO_AMBIENCE.md).
+- Recorrido narrativo dentro de la vivienda con cámara en tercera persona.
+- Tutorial, interacción física mediante Raycast y puzle del baño con tres prendas.
+- Secuencia de abducción, ladridos reactivos y presentación audiovisual.
+- Encuentros con alienígenas, navegación, animaciones y cierre jugable.
+- Audio espacial, música contextual, noticias de televisión y mezcla por categorías.
 
-`Tools/` contiene utilidades de Editor y pruebas; no se compila en el juego. Las instrucciones heredadas `WEBGL_ITCH.md` y los helpers BuildP1/BuildWebGLP1 corresponden a P1; no constituyen una entrega WebGL de P2.
+## Abrir el proyecto
 
-Library, Temp, cachés y Builds se excluyen de Git. PawsBeyond y PawsBeyond-P1 se conservan como proyectos separados.
+1. Clonar este repositorio.
+2. Agregar la carpeta raíz en Unity Hub.
+3. Abrirla con Unity `6000.0.81f1`.
+4. Usar la configuración de escenas versionada en `ProjectSettings/EditorBuildSettings.asset`.
 
-Integración actual y pruebas técnicas de audio: [Docs/P2_AUDIO_RUNWAY.md](Docs/P2_AUDIO_RUNWAY.md).
+La compilación comienza en `Assets/Scenes/Intro.unity` y continúa en `Assets/Scenes/Playground.unity`.
 
-Organización de originales, pruebas y audios en uso: [Docs/ORDEN_AUDIO.md](Docs/ORDEN_AUDIO.md).
+## Controles
 
-Segunda integración de audio: [informe para Audio Interactivo](Docs/PAWS_BEYOND_P2_AUDIO_INFORME.md).
+- `WASD` / stick izquierdo: movimiento.
+- Mouse / stick derecho: cámara.
+- `E` / botón inferior (`X` en PlayStation, `A` en Xbox): interactuar, agarrar y soltar.
+- `B` / botón izquierdo (`Cuadrado` en PlayStation, `X` en Xbox): ladrar.
 
-Fase 1: estabilización del baño, ladridos con B/cuadrado del mando y ondas nativas. Cambios, pruebas y validación manual pendiente: [registro de Fase 1](Docs/P2_FASE_1.md).
+## Organización del repositorio
 
-Fase 2 y base de episodios: [parámetros, cambios y pasada manual pendiente](Docs/P2_FASE_2.md).
+- `Assets/`: escenas, scripts, prefabs, modelos, materiales, audio y UI.
+- `Packages/`: dependencias reproducibles del proyecto.
+- `ProjectSettings/`: configuración de Unity y orden de escenas.
+- `Docs/`: documentación técnica y evidencias académicas.
+- `Tools/`: utilidades de Editor y pruebas internas; no forman parte del ejecutable.
+
+`Library`, `Temp`, `Logs`, `UserSettings` y las builds generadas están excluidas porque Unity las reconstruye localmente.
+
+## Estado de validación
+
+- Estructura Unity verificada sin metadatos faltantes, GUID duplicados ni conflictos.
+- Build Windows 64 bits generada correctamente desde `main`.
+- Arranque técnico del ejecutable comprobado sin excepciones relevantes en `Player.log`.
+
+La aprobación jugable, visual y auditiva completa depende de la pasada manual indicada en la documentación de QA.
